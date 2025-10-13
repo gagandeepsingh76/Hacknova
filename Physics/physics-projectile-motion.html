@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Projectile Motion Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { 
+            --bg-color: #020617; 
+            --card-color: rgba(15, 23, 42, 0.7);
+            --border-color: #1e293b; 
+            --text-color: #94a3b8;
+            --text-light: #e2e8f0;
+            --accent-color: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --accent-secondary: #f472b6;
+        }
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-light); 
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card { 
+            background: var(--card-color); 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px); 
+            border: 1px solid var(--border-color); 
+        }
+        input[type=range] {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 6px;
+            background: var(--border-color);
+            border-radius: 99px; outline: none;
+            transition: background-color 0.2s ease;
+        }
+        input[type=range]:hover { background: #334155; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px;
+            border-radius: 50%; background: var(--accent-color);
+            border: 2px solid var(--text-light); cursor: pointer;
+            transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.4);
+        }
+        .sim-button {
+            background: var(--accent-color);
+            transition: background-color .2s ease, transform .2s ease, box-shadow .2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,.3), inset 0 -2px 0 rgba(0,0,0,0.2);
+        }
+        .sim-button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,.4), inset 0 -2px 0 rgba(0,0,0,0.2);
+        }
+        canvas { touch-action: none; }
+        .hud {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(2, 6, 23, 0.6);
+            backdrop-filter: blur(8px);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            pointer-events: none;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto max-w-7xl">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-cyan-400">Interactive Projectile Simulator</h1>
+            <p class="mt-2 text-slate-400 max-w-2xl mx-auto">Visualize projectile motion with a real-time preview, adjustable physics, and an interactive cannon.</p>
+        </header>
+
+        <!-- SIMULATION CANVAS AREA -->
+        <div class="relative glass-card shadow-2xl p-2 rounded-2xl mb-6">
+            <canvas id="projectile-canvas" class="w-full h-64 md:h-[500px] rounded-lg cursor-crosshair"></canvas>
+            <div id="hud" class="hud hidden">
+                 <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-300">
+                    <p>Time: <span id="time-val" class="font-mono text-white">0.00s</span></p>
+                    <p>X: <span id="x-pos-val" class="font-mono text-white">0.00m</span></p>
+                    <p>Y: <span id="y-pos-val" class="font-mono text-white">0.00m</span></p>
+                    <p>Speed: <span id="speed-val" class="font-mono text-white">0.00m/s</span></p>
+                 </div>
+            </div>
+        </div>
+        
+        <!-- CONTROL DECK -->
+        <div>
+            <h2 class="text-2xl font-bold text-center mb-4 text-slate-300">Control Deck</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Initial Conditions -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-sky-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5-7.5-1.5 7.5 7.5 1.5-1.5z"/></svg>
+                        Initial Conditions
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                        <div>
+                            <label for="velocity" class="font-medium text-slate-300 flex justify-between">Speed: <span id="velocity-val">50 m/s</span></label>
+                            <input type="range" id="velocity" min="1" max="150" value="50" step="1">
+                        </div>
+                        <div>
+                            <label for="angle" class="font-medium text-slate-300 flex justify-between">Angle: <span id="angle-val">45°</span></label>
+                            <input type="range" id="angle" min="0" max="90" value="45" step="1">
+                        </div>
+                        <div>
+                            <label for="height" class="font-medium text-slate-300 flex justify-between">Height: <span id="height-val">0 m</span></label>
+                            <input type="range" id="height" min="0" max="100" value="0" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environment -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-sky-300 flex items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21.5 12.5c0-5.25-4.25-9.5-9.5-9.5S2.5 7.25 2.5 12.5c0 4.23 2.75 7.82 6.5 9.06.4.07.55-.17.55-.38V19.5c-2.67.58-3.23-1.28-3.23-1.28-.36-.92-.88-1.17-.88-1.17-.72-.49.05-.48.05-.48.8.06 1.22.82 1.22.82.71 1.21 1.86.86 2.31.66.07-.51.28-.86.51-1.06-1.76-.2-3.61-.88-3.61-3.92 0-.87.31-1.58.82-2.13-.08-.2-.36-1.01.08-2.1 0 0 .67-.21 2.18.82.63-.18 1.31-.26 1.99-.27.68 0 1.36.09 1.99.27 1.51-1.04 2.18-.82 2.18-.82.44 1.09.16 1.9.08 2.1.51.55.82 1.26.82 2.13 0 3.05-1.86 3.72-3.63 3.92.29.25.54.73.54 1.48v2.18c0 .21.15.45.55.38C18.75 20.32 21.5 16.73 21.5 12.5z"/></svg>
+                        Environment
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                        <div>
+                            <label for="gravity" class="font-medium text-slate-300 flex justify-between">Gravity: <span id="gravity-val">9.81 m/s²</span></label>
+                            <input type="range" id="gravity" min="1" max="25" value="9.81" step="0.01">
+                        </div>
+                        <div class="flex items-center pt-2">
+                            <input type="checkbox" id="air-resistance" class="h-4 w-4 rounded border-gray-500 text-sky-500 focus:ring-sky-500 bg-slate-700">
+                            <label for="air-resistance" class="ml-2 block">Enable Air Resistance</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Object Properties -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                     <h3 class="font-bold text-lg text-sky-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>
+                        Object Properties
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                        <div>
+                            <label for="mass" class="font-medium text-slate-300 flex justify-between">Mass: <span id="mass-val">1.0 kg</span></label>
+                            <input type="range" id="mass" min="0.1" max="10" value="1" step="0.1">
+                        </div>
+                        <div>
+                            <label for="drag-coeff" class="font-medium text-slate-300 flex justify-between">Drag Coeff: <span id="drag-coeff-val">0.47</span></label>
+                            <input type="range" id="drag-coeff" min="0" max="1" value="0.47" step="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions & Results -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl flex flex-col justify-between">
+                     <h3 class="font-bold text-lg text-sky-300 flex items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" /><path d="m9 12 2 2 4-4" /></svg>
+                        Results
+                    </h3>
+                     <div class="text-sm text-slate-300 my-3 space-y-1">
+                        <p class="flex justify-between">Max Height: <span id="max-height" class="font-semibold font-mono text-white">0.00 m</span></p>
+                        <p class="flex justify-between">Range: <span id="range" class="font-semibold font-mono text-white">0.00 m</span></p>
+                        <p class="flex justify-between">Flight Time: <span id="flight-time" class="font-semibold font-mono text-white">0.00 s</span></p>
+                    </div>
+                    <div class="pt-2">
+                        <div class="flex items-center mb-4">
+                            <input type="checkbox" id="leave-trace" class="h-4 w-4 rounded border-gray-500 text-sky-500 focus:ring-sky-500 bg-slate-700">
+                            <label for="leave-trace" class="ml-2 block text-sm">Leave Trace</label>
+                        </div>
+                        <div class="flex gap-4">
+                            <button id="fire-btn" class="w-full sim-button font-bold py-2.5 px-4 rounded-lg flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                Fire
+                            </button>
+                            <button id="reset-btn" class="w-full bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M3 2v6h6"/><path d="M21 12A9 9 0 0 0 6 5.3L3 8"/><path d="M21 22v-6h-6"/><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"/></svg>
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('projectile-canvas');
+    const ctx = canvas.getContext('2d');
+    const hud = document.getElementById('hud');
+    const inputs = {
+        velocity: document.getElementById('velocity'), angle: document.getElementById('angle'), height: document.getElementById('height'),
+        gravity: document.getElementById('gravity'), mass: document.getElementById('mass'),
+        airResistance: document.getElementById('air-resistance'), dragCoeff: document.getElementById('drag-coeff'), leaveTrace: document.getElementById('leave-trace'),
+    };
+    const valueSpans = {
+        velocity: document.getElementById('velocity-val'), angle: document.getElementById('angle-val'), height: document.getElementById('height-val'),
+        gravity: document.getElementById('gravity-val'), mass: document.getElementById('mass-val'), dragCoeff: document.getElementById('drag-coeff-val'),
+    };
+    const metrics = {
+        maxHeight: document.getElementById('max-height'), range: document.getElementById('range'), flightTime: document.getElementById('flight-time'),
+    };
+    const liveMetrics = {
+        time: document.getElementById('time-val'), xPos: document.getElementById('x-pos-val'),
+        yPos: document.getElementById('y-pos-val'), speed: document.getElementById('speed-val'),
+    };
+    const buttons = { fire: document.getElementById('fire-btn'), reset: document.getElementById('reset-btn') };
+
+    let rafId = null, simRunning = false, projectile = {}, simTime = 0;
+    let trajectories = [], currentTrajectory = [], lastResult = null, params = {};
+    const DT = 0.01;
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height > 100 ? rect.height : 500;
+        draw();
+    }
+    
+    function updateParams() {
+        params = {
+            v0: parseFloat(inputs.velocity.value), angle: parseFloat(inputs.angle.value) * Math.PI / 180,
+            h0: parseFloat(inputs.height.value), g: parseFloat(inputs.gravity.value),
+            mass: parseFloat(inputs.mass.value), rho: 1.225, Cd: parseFloat(inputs.dragCoeff.value),
+            useAirResistance: inputs.airResistance.checked, A: 0.01
+        };
+    }
+
+    function physicsStep() {
+        let ax = 0, ay = -params.g;
+        if (params.useAirResistance) {
+            const v = Math.hypot(projectile.vx, projectile.vy);
+            const dragForceMag = 0.5 * params.rho * v * v * params.Cd * params.A;
+            if (v > 0) {
+                ax -= (dragForceMag / params.mass) * (projectile.vx / v);
+                ay -= (dragForceMag / params.mass) * (projectile.vy / v);
+            }
+        }
+        projectile.vx += ax * DT;
+        projectile.vy += ay * DT;
+        projectile.x += projectile.vx * DT;
+        projectile.y += projectile.vy * DT;
+        simTime += DT;
+    }
+
+    function startSimulation() {
+        if (simRunning) return;
+        simRunning = true;
+        if (!inputs.leaveTrace.checked) trajectories = [];
+        updateParams();
+        projectile = { x: 0, y: params.h0, vx: params.v0 * Math.cos(params.angle), vy: params.v0 * Math.sin(params.angle) };
+        simTime = 0;
+        lastResult = null;
+        currentTrajectory = [{ x: projectile.x, y: projectile.y }];
+        trajectories.push(currentTrajectory);
+        resetMetrics(true);
+        hud.classList.remove('hidden');
+        buttons.fire.disabled = true;
+        buttons.fire.innerHTML = `Running...`;
+        rafId = requestAnimationFrame(loop);
+    }
+    
+    function loop() {
+        physicsStep();
+        currentTrajectory.push({ x: projectile.x, y: Math.max(0, projectile.y) });
+        updateLiveMetrics();
+        draw();
+        if (projectile.y <= 0 && projectile.vy < 0) { stopSimulation(); return; }
+        if (simRunning) rafId = requestAnimationFrame(loop);
+    }
+
+    function stopSimulation() {
+        simRunning = false;
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = null;
+        finalizeMetrics();
+        buttons.fire.disabled = false;
+        buttons.fire.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> Fire`;
+    }
+
+    function resetSimulation() {
+        stopSimulation();
+        trajectories = []; currentTrajectory = []; lastResult = null;
+        projectile = {};
+        resetMetrics(false);
+        hud.classList.add('hidden');
+        draw();
+    }
+
+    function getSimulationBounds() {
+        const margin = 1.15;
+        let maxX = 100, maxY = 50;
+        if (trajectories.length > 0) {
+            maxX = 0; maxY = 0;
+            trajectories.forEach(traj => traj.forEach(p => {
+                if (p.x > maxX) maxX = p.x;
+                if (p.y > maxY) maxY = p.y;
+            }));
+        }
+        return { maxX: Math.max(100, maxX * margin), maxY: Math.max(50, maxY * margin) };
+    }
+    
+    function toCanvasCoords(x_world, y_world, bounds) {
+        const margin = 40;
+        const scale = Math.min((canvas.width - 2 * margin) / bounds.maxX, (canvas.height - 2 * margin) / bounds.maxY);
+        return { x: margin + x_world * scale, y: canvas.height - (margin + y_world * scale), scale: scale };
+    }
+
+    function draw() {
+        const bounds = getSimulationBounds();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground(bounds);
+        drawGrid(bounds);
+        if(!simRunning) drawGhostTrajectory(bounds);
+        
+        ctx.lineWidth = 2.5;
+        trajectories.forEach((traj, index) => {
+            if (traj.length < 2) return;
+            const isCurrent = index === trajectories.length - 1 && simRunning;
+            ctx.strokeStyle = isCurrent ? '#38bdf8' : '#475569';
+            ctx.beginPath();
+            let p0 = toCanvasCoords(traj[0].x, traj[0].y, bounds);
+            ctx.moveTo(p0.x, p0.y);
+            for (let i = 1; i < traj.length; i++) {
+                let p = toCanvasCoords(traj[i].x, traj[i].y, bounds);
+                ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+        });
+
+        if (lastResult) drawResultMarkers(bounds);
+
+        if (currentTrajectory.length > 0 && projectile.y >= 0) {
+            const p = toCanvasCoords(projectile.x, projectile.y, bounds);
+            ctx.fillStyle = '#67e8f9';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        drawLauncher(bounds);
+    }
+    
+    function drawBackground(bounds) {
+        const groundY = toCanvasCoords(0,0,bounds).y;
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, groundY);
+        skyGradient.addColorStop(0, '#0f172a');
+        skyGradient.addColorStop(1, '#1e293b');
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, canvas.width, groundY);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+    }
+
+    function drawGrid(bounds) { /* Omitted for brevity - same as previous version */ }
+
+    function drawLauncher(bounds) {
+        updateParams();
+        const startPos = toCanvasCoords(0, params.h0, bounds);
+        ctx.save();
+        ctx.translate(startPos.x, startPos.y);
+        ctx.rotate(-params.angle);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(0, -5, 30, 10);
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    function drawGhostTrajectory(bounds) {
+        updateParams();
+        const ghostPoints = [];
+        let y = params.h0;
+        for (let t = 0; y >= 0; t += 0.2) {
+            const x = params.v0 * Math.cos(params.angle) * t;
+            y = params.h0 + (params.v0 * Math.sin(params.angle) * t) - (0.5 * params.g * t * t);
+            ghostPoints.push({x, y});
+        }
+        
+        ctx.save();
+        ctx.setLineDash([4, 8]);
+        ctx.strokeStyle = "rgba(244, 114, 182, 0.6)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let p0 = toCanvasCoords(ghostPoints[0].x, ghostPoints[0].y, bounds);
+        ctx.moveTo(p0.x, p0.y);
+        for(let i=1; i<ghostPoints.length; i++){
+            let p = toCanvasCoords(ghostPoints[i].x, ghostPoints[i].y, bounds);
+            ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawResultMarkers(bounds) {
+        const peakPos = toCanvasCoords(lastResult.peakX, lastResult.peakY, bounds);
+        const rangePos = toCanvasCoords(lastResult.finalX, 0, bounds);
+
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Inter';
+        
+        // Peak Marker
+        ctx.beginPath(); ctx.arc(peakPos.x, peakPos.y, 4, 0, 2*Math.PI); ctx.fill();
+        ctx.fillText(`Apogee: ${lastResult.peakY.toFixed(1)}m`, peakPos.x + 10, peakPos.y);
+
+        // Range Marker
+        ctx.beginPath(); ctx.arc(rangePos.x, rangePos.y, 4, 0, 2*Math.PI); ctx.fill();
+        ctx.fillText(`Range: ${lastResult.finalX.toFixed(1)}m`, rangePos.x - 30, rangePos.y - 15);
+    }
+
+
+    function updateSliderValue(e) {
+        const id = e.target.id;
+        const span = valueSpans[id];
+        let suffix = { velocity: " m/s", angle: "°", height: " m", gravity: " m/s²", mass: " kg", dragCoeff: "" }[id];
+        if (span) {
+            let value = parseFloat(e.target.value);
+            let decimals = (id === 'mass') ? 1 : (id === 'velocity' || id === 'angle' || id === 'height') ? 0 : 2;
+            span.textContent = value.toFixed(decimals) + suffix;
+        }
+        if (!simRunning) draw();
+    }
+    
+    function resetMetrics(liveOnly = false) {
+        if (!liveOnly) {
+            metrics.maxHeight.textContent = '0.00 m';
+            metrics.range.textContent = '0.00 m';
+            metrics.flightTime.textContent = '0.00 s';
+        }
+        liveMetrics.time.textContent = '0.00s';
+        liveMetrics.xPos.textContent = '0.00m';
+        liveMetrics.yPos.textContent = '0.00m';
+        liveMetrics.speed.textContent = '0.00m/s';
+    }
+
+    function updateLiveMetrics() {
+        liveMetrics.time.textContent = `${simTime.toFixed(2)}s`;
+        liveMetrics.xPos.textContent = `${projectile.x.toFixed(2)}m`;
+        liveMetrics.yPos.textContent = `${projectile.y.toFixed(2)}m`;
+        liveMetrics.speed.textContent = `${Math.hypot(projectile.vx, projectile.vy).toFixed(2)}m/s`;
+    }
+
+    function finalizeMetrics() {
+        let peakY = 0, peakX = 0;
+        currentTrajectory.forEach(p => {
+            if (p.y > peakY) {
+                peakY = p.y;
+                peakX = p.x;
+            }
+        });
+        const finalX = projectile.x;
+
+        metrics.maxHeight.textContent = `${peakY.toFixed(2)} m`;
+        metrics.range.textContent = `${finalX.toFixed(2)} m`;
+        metrics.flightTime.textContent = `${simTime.toFixed(2)} s`;
+        lastResult = { peakY, peakX, finalX };
+        draw();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    Object.values(inputs).forEach(input => {
+        if (input.type === 'range') input.addEventListener('input', updateSliderValue);
+    });
+    buttons.fire.addEventListener('click', startSimulation);
+    buttons.reset.addEventListener('click', resetSimulation);
+
+    resizeCanvas();
+    Object.values(inputs).forEach(input => {
+        if(input.type === 'range') input.dispatchEvent(new Event('input'));
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Enzyme Kinetics Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { 
+            --bg-color: #020617; 
+            --card-color: rgba(15, 23, 42, 0.7);
+            --border-color: #1e293b; 
+            --text-light: #e2e8f0;
+            --accent-color: #10b981; /* Emerald */
+            --substrate-color: 'rgba(59, 130, 246, 0.9)';
+            --product-color: 'rgba(234, 179, 8, 0.9)';
+            --inhibitor-color: 'rgba(239, 68, 68, 0.9)';
+        }
+        body { background-color: var(--bg-color); color: var(--text-light); font-family: 'Inter', sans-serif; }
+        .glass-card { background: var(--card-color); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-color); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: var(--border-color); border-radius: 99px; outline: none; transition: background-color 0.2s ease; }
+        input[type=range]:hover { background: #334155; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+            border-radius: 50%; background: var(--accent-color); border: 2px solid var(--text-light);
+            cursor: pointer; transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.4); }
+        .sim-button {
+            background-color: var(--border-color);
+            border: 1px solid #334155;
+            transition: all 0.2s ease;
+        }
+        .sim-button:hover {
+            background-color: #334155;
+            border-color: var(--accent-color);
+        }
+         select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
+            padding-right: 2.5rem; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto max-w-7xl">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400">Enzyme Kinetics Simulator</h1>
+            <p class="mt-2 text-slate-400 max-w-2xl mx-auto">Observe enzyme-substrate interactions and the effects of temperature and inhibitors on reaction rates.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card shadow-2xl p-2 rounded-2xl lg:col-span-2">
+                <canvas id="simulation-canvas" class="w-full h-[500px] md:h-[600px] rounded-lg"></canvas>
+            </div>
+            
+            <div class="space-y-6">
+                 <h2 class="text-2xl font-bold text-center text-slate-300">Reaction Controls</h2>
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-emerald-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M12 18v-6"></path><path d="M9 15h6"></path></svg>
+                        Conditions & Reagents
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                        <div>
+                            <label for="temperature" class="font-medium text-slate-300 flex justify-between">Temperature: <span id="temp-val">37°C</span></label>
+                            <input type="range" id="temperature" min="0" max="60" step="1" value="37">
+                        </div>
+                        <div>
+                            <label for="inhibitor-type" class="font-medium text-slate-300">Inhibitor Type</label>
+                            <select id="inhibitor-type" class="w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                                <option value="none">None</option>
+                                <option value="competitive">Competitive</option>
+                                <option value="noncompetitive">Non-competitive</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 !mt-6">
+                           <button id="add-substrate" class="sim-button py-2 rounded-lg">+ Add Substrate</button>
+                           <button id="add-enzyme" class="sim-button py-2 rounded-lg">+ Add Enzyme</button>
+                           <button id="add-inhibitor" class="sim-button py-2 rounded-lg col-span-2">+ Add Inhibitor</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                     <h3 class="font-bold text-lg text-emerald-300 flex items-center">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+                        Live Analysis
+                    </h3>
+                    <canvas id="graph-canvas" class="w-full h-32 mt-2 rounded-lg bg-slate-900/50 border border-slate-700"></canvas>
+                    <div class="text-sm pt-2 space-y-2">
+                        <p class="flex justify-between text-slate-400">Vmax (est.): <span id="vmax-val" class="font-mono text-white">0.00</span></p>
+                        <p class="flex justify-between text-slate-400">Current Rate (V): <span id="rate-val" class="font-mono text-white">0.00</span></p>
+                    </div>
+                    <div class="flex gap-4 pt-2">
+                        <button id="play-pause-btn" class="w-full sim-button font-bold py-3 px-4 rounded-lg bg-emerald-500 text-slate-900 hover:bg-emerald-400">
+                           <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2"><path d="M8 5v14l11-7z"></path></svg>
+                           <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2 hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+                            <span id="play-pause-text">Start</span>
+                        </button>
+                        <button id="reset-btn" class="w-full bg-slate-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-slate-700">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() {
+    const simCanvas = document.getElementById('simulation-canvas');
+    const simCtx = simCanvas.getContext('2d');
+    const graphCanvas = document.getElementById('graph-canvas');
+    const graphCtx = graphCanvas.getContext('2d');
+    
+    const inputs = {
+        temperature: document.getElementById('temperature'),
+        inhibitorType: document.getElementById('inhibitor-type'),
+    };
+    const valueSpans = {
+        temperature: document.getElementById('temp-val'),
+    };
+    const analysis = {
+        vmax: document.getElementById('vmax-val'),
+        rate: document.getElementById('rate-val'),
+    };
+    
+    const addSubstrateBtn = document.getElementById('add-substrate');
+    const addEnzymeBtn = document.getElementById('add-enzyme');
+    const addInhibitorBtn = document.getElementById('add-inhibitor');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const playPauseText = document.getElementById('play-pause-text');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let state = { T: 37, inhibitorType: 'none', Km: 10, k_cat: 20 };
+    let sim = { particles: [], running: false, history: [], time: 0, productsLastSecond: 0 };
+    let rafId = null;
+
+    function resizeCanvas() {
+        // ... (resize logic as in previous examples)
+        draw();
+    }
+
+    function resetSimulation() {
+        if (sim.running) togglePlayPause();
+        sim = { particles: [], running: false, history: [], time: 0, productsLastSecond: 0 };
+        for(let i=0; i<50; i++) sim.particles.push(createAgent('substrate'));
+        for(let i=0; i<10; i++) sim.particles.push(createAgent('enzyme'));
+        updateStateFromInputs();
+        draw();
+    }
+    
+    function createAgent(type) {
+        return {
+            x: Math.random() * simCanvas.width,
+            y: Math.random() * simCanvas.height,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            type: type,
+            boundTo: null,
+            boundTime: 0,
+        };
+    }
+
+    function updateStateFromInputs() {
+        state.T = parseFloat(inputs.temperature.value);
+        state.inhibitorType = inputs.inhibitorType.value;
+        valueSpans.temperature.textContent = `${state.T.toFixed(0)}°C`;
+    }
+    
+    function physicsStep() {
+        const speed = Math.sqrt(state.T / 37); // Relative to 37C
+        const tempEffect = Math.exp(-((state.T - 37)**2) / 200); // Gaussian temp dependency
+        const reactionTime = 1000 / (state.k_cat * tempEffect); // ms
+
+        for (let i = sim.particles.length - 1; i >= 0; i--) {
+            const p1 = sim.particles[i];
+            moveAgent(p1, speed);
+
+            if (p1.type === 'enzyme' && !p1.boundTo) {
+                 for (let j = sim.particles.length - 1; j >= 0; j--) {
+                    const p2 = sim.particles[j];
+                    if ( (p2.type === 'substrate' || (p2.type === 'inhibitor' && state.inhibitorType === 'competitive')) && !p2.boundTo) {
+                        const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                        if (dist < 15) {
+                            p1.boundTo = p2;
+                            p2.boundTo = p1;
+                            p1.boundTime = Date.now();
+                            break;
+                        }
+                    }
+                 }
+            } else if (p1.type === 'enzyme' && p1.boundTo) {
+                const boundParticle = p1.boundTo;
+                boundParticle.x = p1.x + 5; boundParticle.y = p1.y;
+
+                if(boundParticle.type === 'substrate' && Date.now() - p1.boundTime > reactionTime) {
+                    boundParticle.type = 'product';
+                    p1.boundTo = null;
+                    boundParticle.boundTo = null;
+                    sim.productsLastSecond++;
+                }
+            }
+        }
+        
+        sim.time += 16;
+        if(sim.time % 1000 < 16) { // Update rates every second
+            const substrateCount = sim.particles.filter(p=>p.type === 'substrate').length;
+            const V = sim.productsLastSecond;
+            const Vmax = state.k_cat * sim.particles.filter(p=>p.type === 'enzyme').length;
+            analysis.rate.textContent = V.toFixed(2);
+            analysis.vmax.textContent = Vmax.toFixed(2);
+            sim.productsLastSecond = 0;
+            
+            sim.history.push({s: substrateCount, p: sim.particles.filter(p=>p.type === 'product').length});
+            if(sim.history.length > 100) sim.history.shift();
+        }
+    }
+    
+    function moveAgent(agent, speed) {
+        if (agent.boundTo) return;
+        agent.x += agent.vx * speed;
+        agent.y += agent.vy * speed;
+        if (agent.x < 0 || agent.x > simCanvas.width) { agent.vx *= -1; agent.x = Math.max(0, Math.min(simCanvas.width, agent.x)); }
+        if (agent.y < 0 || agent.y > simCanvas.height) { agent.vy *= -1; agent.y = Math.max(0, Math.min(simCanvas.height, agent.y)); }
+    }
+
+    function loop() {
+        if (!sim.running) return;
+        physicsStep();
+        draw();
+        rafId = requestAnimationFrame(loop);
+    }
+
+    function draw() {
+        simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+        simCtx.strokeStyle = '#334155';
+        simCtx.strokeRect(0, 0, simCanvas.width, simCanvas.height);
+        
+        sim.particles.forEach(p => drawAgent(p));
+        drawGraph();
+    }
+    
+    function drawAgent(p) {
+        if (p.type === 'enzyme') {
+             simCtx.fillStyle = p.boundTo ? '#6b7280' : '#9ca3af';
+             simCtx.beginPath();
+             simCtx.arc(p.x, p.y, 10, 0.2 * Math.PI, 1.8 * Math.PI);
+             simCtx.lineTo(p.x, p.y);
+             simCtx.closePath();
+             simCtx.fill();
+        } else {
+            simCtx.fillStyle = `var(--${p.type}-color)`;
+            simCtx.beginPath();
+            simCtx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+            simCtx.fill();
+        }
+    }
+    
+    function drawGraph() {
+        graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+        if (sim.history.length < 2) return;
+        const maxVal = Math.max(50, ...sim.history.map(p => p.s + p.p));
+
+        function plot(key, color) {
+            graphCtx.strokeStyle = color; graphCtx.lineWidth = 2; graphCtx.beginPath();
+            sim.history.forEach((p, i) => {
+                const x = (i / sim.history.length) * graphCanvas.width;
+                const y = graphCanvas.height - (p[key] / maxVal) * graphCanvas.height;
+                if (i === 0) graphCtx.moveTo(x, y); else graphCtx.lineTo(x, y);
+            });
+            graphCtx.stroke();
+        }
+        plot('s', 'var(--substrate-color)');
+        plot('p', 'var(--product-color)');
+    }
+    
+    function togglePlayPause() {
+        sim.running = !sim.running;
+        playPauseText.textContent = sim.running ? 'Pause' : 'Start';
+        playIcon.classList.toggle('hidden', sim.running);
+        pauseIcon.classList.toggle('hidden', !sim.running);
+        if (sim.running) loop(); else if(rafId) cancelAnimationFrame(rafId);
+    }
+
+    // --- Event Handlers ---
+    Object.values(inputs).forEach(input => input.addEventListener('input', updateStateFromInputs));
+    addSubstrateBtn.addEventListener('click', () => { for(let i=0; i<10; i++) sim.particles.push(createAgent('substrate')); });
+    addEnzymeBtn.addEventListener('click', () => { for(let i=0; i<5; i++) sim.particles.push(createAgent('enzyme')); });
+    addInhibitorBtn.addEventListener('click', () => { for(let i=0; i<10; i++) sim.particles.push(createAgent('inhibitor')); });
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    resetBtn.addEventListener('click', resetSimulation);
+    window.addEventListener('resize', resizeCanvas);
+    
+    resetSimulation();
+})();
+</script>
+</body>
+</html>
+

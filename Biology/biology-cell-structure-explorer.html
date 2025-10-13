@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Cell Structure Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { 
+            --bg-color: #020617; 
+            --card-color: rgba(15, 23, 42, 0.7);
+            --border-color: #1e293b; 
+            --text-light: #e2e8f0;
+            --accent-color: #14b8a6; /* Teal */
+            --highlight-color: 'rgba(251, 191, 36, 0.7)';
+        }
+        body { background-color: var(--bg-color); color: var(--text-light); font-family: 'Inter', sans-serif; }
+        .glass-card { background: var(--card-color); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-color); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: var(--border-color); border-radius: 99px; outline: none; transition: background-color 0.2s ease; }
+        input[type=range]:hover { background: #334155; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+            border-radius: 50%; background: var(--accent-color); border: 2px solid var(--text-light);
+            cursor: pointer; transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+            box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.4); }
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
+            padding-right: 2.5rem; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        }
+        canvas { cursor: pointer; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto max-w-7xl">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-400">Cell Structure Explorer</h1>
+            <p class="mt-2 text-slate-400 max-w-2xl mx-auto">Explore the organelles of plant and animal cells by clicking on the interactive diagram.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card shadow-2xl p-2 rounded-2xl lg:col-span-2">
+                <canvas id="simulation-canvas" class="w-full h-[500px] md:h-[600px] rounded-lg"></canvas>
+            </div>
+            
+            <div class="space-y-6">
+                 <h2 class="text-2xl font-bold text-center text-slate-300">Controls & Information</h2>
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-teal-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M12 22a7 7 0 0 0 7-7h-2a5 5 0 0 1-5 5v2z"></path><path d="M22 12h-2a5 5 0 0 1-5-5V5a7 7 0 0 0-7 7h2a5 5 0 0 1 5 5z"></path><path d="M2 12h2a5 5 0 0 1 5-5V5a7 7 0 0 0-7 7z"></path><path d="M12 2a7 7 0 0 0-7 7h2a5 5 0 0 1 5-5V2z"></path></svg>
+                        Display Options
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                        <div>
+                             <label for="cell-type" class="font-medium text-slate-300">Cell Type</label>
+                            <select id="cell-type" class="w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                                <option value="animal">Animal Cell</option>
+                                <option value="plant">Plant Cell</option>
+                            </select>
+                        </div>
+                        <div>
+                             <label for="highlight-organelle" class="font-medium text-slate-300">Highlight Organelle</label>
+                            <select id="highlight-organelle" class="w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label for="zoom" class="font-medium text-slate-300 flex justify-between">Zoom: <span id="zoom-val">1.0x</span></label>
+                            <input type="range" id="zoom" min="0.5" max="3.0" step="0.1" value="1.0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                     <h3 id="info-title" class="font-bold text-lg text-teal-300 flex items-center">
+                        Select an Organelle
+                    </h3>
+                     <p id="info-description" class="text-sm text-slate-400 pt-2"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('simulation-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const cellTypeSelect = document.getElementById('cell-type');
+    const highlightSelect = document.getElementById('highlight-organelle');
+    const zoomSlider = document.getElementById('zoom');
+    const zoomVal = document.getElementById('zoom-val');
+    const infoTitle = document.getElementById('info-title');
+    const infoDescription = document.getElementById('info-description');
+    
+    // Organelle data with descriptions and drawing info
+    const ORGANELLES = {
+        // ... (data will be defined below)
+    };
+
+    let state = {
+        cellType: 'animal',
+        highlight: 'none',
+        zoom: 1.0,
+        pan: { x: 0, y: 0 },
+        isPanning: false,
+        lastPanPos: { x: 0, y: 0 },
+    };
+
+    function defineOrganelles() {
+        const baseOrganelles = {
+            nucleus: { name: "Nucleus", desc: "Contains the cell's genetic material (DNA) and controls cell activities.", color: "#8b5cf6", draw: (ctx, s) => { ctx.beginPath(); ctx.arc(-80 * s, 0, 40 * s, 0, Math.PI * 2); ctx.fill(); } },
+            mitochondrion: { name: "Mitochondrion", desc: "The powerhouse of the cell, generating most of the cell's supply of ATP.", color: "#f97316", draw: (ctx, s) => { ctx.fillRect(50 * s, -60 * s, 60 * s, 30 * s); } },
+            ribosome: { name: "Ribosomes", desc: "Synthesize proteins. Found free in the cytoplasm or bound to the ER.", color: "#ec4899", draw: (ctx, s) => { for(let i=0; i<10; i++) { ctx.beginPath(); ctx.arc(Math.random()*200-100, Math.random()*150-75, 2*s, 0, Math.PI*2); ctx.fill(); } } },
+            cytoplasm: { name: "Cytoplasm", desc: "The jelly-like substance filling the cell, where organelles are suspended.", color: "rgba(14, 165, 233, 0.2)" },
+            cell_membrane: { name: "Cell Membrane", desc: "A selectively permeable barrier that regulates what enters and leaves the cell.", color: "#0ea5e9" },
+        };
+
+        ORGANELLES.animal = {
+            ...baseOrganelles,
+            shape: 'ellipse',
+            items: ['cytoplasm', 'nucleus', 'mitochondrion', 'ribosome', 'cell_membrane']
+        };
+
+        ORGANELLES.plant = {
+            ...baseOrganelles,
+            shape: 'rect',
+            cell_wall: { name: "Cell Wall", desc: "A rigid outer layer that provides structural support and protection to the plant cell.", color: "#166534" },
+            chloroplast: { name: "Chloroplast", desc: "Site of photosynthesis, converting light energy into chemical energy.", color: "#84cc16", draw: (ctx, s) => { ctx.fillRect(50 * s, 40 * s, 50 * s, 30 * s); } },
+            vacuole: { name: "Large Central Vacuole", desc: "Maintains turgor pressure against the cell wall and stores nutrients and waste.", color: "rgba(165, 243, 252, 0.3)", draw: (ctx, s) => { ctx.fillRect(-120 * s, -80 * s, 240 * s, 160 * s); } },
+            items: ['cell_wall', 'cytoplasm', 'vacuole', 'nucleus', 'mitochondrion', 'chloroplast', 'ribosome', 'cell_membrane' ]
+        };
+        populateHighlightDropdown();
+    }
+
+    function populateHighlightDropdown() {
+        highlightSelect.innerHTML = '<option value="none">None</option>';
+        const currentOrganelles = ORGANELLES[state.cellType];
+        currentOrganelles.items.forEach(key => {
+            const data = currentOrganelles[key];
+            if(data && data.draw) { // Only add items that are drawable objects
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = data.name;
+                highlightSelect.appendChild(option);
+            }
+        });
+    }
+
+    function resizeCanvas() {
+        const simRect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = simRect.width;
+        canvas.height = simRect.height > 100 ? simRect.height : 600;
+        draw();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        ctx.save();
+        ctx.translate(centerX + state.pan.x, centerY + state.pan.y);
+        ctx.scale(state.zoom, state.zoom);
+
+        const cell = ORGANELLES[state.cellType];
+        const scale = Math.min(canvas.width / 500, canvas.height / 400);
+
+        // Draw from back to front
+        cell.items.forEach(key => {
+            const organelle = cell[key];
+            if (!organelle) return;
+            ctx.fillStyle = organelle.color;
+            ctx.strokeStyle = organelle.color;
+
+            if (key === 'cell_membrane') {
+                 if (cell.shape === 'ellipse') {
+                    ctx.beginPath(); ctx.ellipse(0, 0, 200 * scale, 150 * scale, 0, 0, 2*Math.PI); ctx.stroke();
+                 }
+            } else if (key === 'cell_wall') {
+                ctx.fillRect(-220 * scale, -170 * scale, 440 * scale, 340 * scale);
+            } else if (key === 'cytoplasm') {
+                 if (cell.shape === 'ellipse') {
+                    ctx.beginPath(); ctx.ellipse(0, 0, 200 * scale, 150 * scale, 0, 0, 2*Math.PI); ctx.fill();
+                 } else {
+                    ctx.fillRect(-200 * scale, -150 * scale, 400 * scale, 300 * scale);
+                 }
+            } else if (organelle.draw) {
+                organelle.draw(ctx, scale);
+            }
+        });
+        
+        // Highlight
+        if (state.highlight !== 'none') {
+            const organelle = cell[state.highlight];
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.5)';
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 3 / state.zoom;
+            if (organelle.draw) {
+                organelle.draw(ctx, scale);
+                ctx.stroke(); // Add stroke for highlight
+            }
+        }
+        
+        ctx.restore();
+    }
+
+    function updateInfoPanel(organelleKey) {
+        const cell = ORGANELLES[state.cellType];
+        const organelle = cell[organelleKey] || { name: 'Select an Organelle', desc: 'Click an organelle on the diagram or use the dropdown to learn about its function.'};
+        infoTitle.textContent = organelle.name;
+        infoDescription.textContent = organelle.desc;
+    }
+    
+    // --- Event Handlers ---
+    canvas.addEventListener('click', e => {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left - canvas.width / 2 - state.pan.x) / state.zoom;
+        const y = (e.clientY - rect.top - canvas.height / 2 - state.pan.y) / state.zoom;
+        const scale = Math.min(canvas.width / 500, canvas.height / 400);
+
+        // Simple hit detection (reverse order for top-most)
+        const cell = ORGANELLES[state.cellType];
+        let found = 'none';
+        [...cell.items].reverse().forEach(key => {
+            if (found !== 'none') return;
+            if (key === 'nucleus' && Math.hypot(x + 80*scale, y) < 40*scale) found = key;
+            if (key === 'mitochondrion' && x > 50*scale && x < 110*scale && y > -60*scale && y < -30*scale) found = key;
+            // ... add more hit detection boxes
+        });
+        
+        highlightSelect.value = found;
+        state.highlight = found;
+        updateInfoPanel(found);
+        draw();
+    });
+
+    cellTypeSelect.addEventListener('change', e => {
+        state.cellType = e.target.value;
+        state.highlight = 'none';
+        populateHighlightDropdown();
+        updateInfoPanel('none');
+        draw();
+    });
+    highlightSelect.addEventListener('change', e => {
+        state.highlight = e.target.value;
+        updateInfoPanel(e.target.value);
+        draw();
+    });
+    zoomSlider.addEventListener('input', e => {
+        state.zoom = parseFloat(e.target.value);
+        zoomVal.textContent = `${state.zoom.toFixed(1)}x`;
+        draw();
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    
+    defineOrganelles();
+    updateInfoPanel('none');
+    resizeCanvas();
+})();
+</script>
+</body>
+</html>
+
