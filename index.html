@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-Lab | A New Frontier in Science</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* New "Monochrome Elegance" theme */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #121212; /* A deep, near-black */
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Frosted glass header effect */
+        header {
+            background-color: rgba(18, 18, 18, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Clean, solid title */
+        .main-title {
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Card container for perspective */
+        .subject-card {
+            perspective: 1500px;
+        }
+        
+        /* Main card content with stacked effect */
+        .card-inner {
+            position: relative;
+            background: #1E1E1E;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), border-color 0.4s ease;
+            z-index: 10;
+        }
+
+        /* The "stacked papers" behind the main card */
+        .card-inner::before, .card-inner::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: #1E1E1E;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem; /* rounded-3xl */
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .card-inner::before {
+            transform: rotate(-3deg);
+            z-index: -1;
+        }
+
+        .card-inner::after {
+            transform: rotate(-6deg);
+            z-index: -2;
+        }
+        
+        /* Subtle hover effect */
+        .subject-card:hover .card-inner {
+            transform: translateY(-10px);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .subject-card:hover .card-inner::before {
+            transform: translate(5px, 2px) rotate(-2deg);
+        }
+        
+        .subject-card:hover .card-inner::after {
+            transform: translate(10px, 4px) rotate(-1deg);
+        }
+
+        /* Minimalist premium button */
+        .premium-button {
+            background-color: #ffffff;
+            color: #121212;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .premium-button:hover {
+            background-color: #d1d1d1;
+            transform: translateY(-2px);
+        }
+        
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header Navigation -->
+    <header class="shadow-lg sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-white tracking-wider">V-Lab</div>
+            <div class="hidden md:flex items-center space-x-4 flex-1 justify-center">
+                <div class="relative w-full max-w-lg">
+                    <input type="text" placeholder="Search for experiments..." class="w-full bg-[#2a2a2a] text-white border border-gray-700 rounded-full py-2 px-5 focus:outline-none focus:ring-2 focus:ring-white transition-all duration-300">
+                    <svg class="w-5 h-5 absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="hidden md:block bg-transparent text-gray-300 py-2 px-4 rounded-full hover:bg-gray-800 hover:text-white transition duration-300">Sign In</button>
+                <button class="premium-button font-semibold py-2 px-5 rounded-full shadow-md">Sign Up</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <div class="text-center mb-20">
+            <h1 class="main-title text-5xl md:text-7xl font-bold mb-4">Virtual Science Lab</h1>
+            <p class="text-lg md:text-xl text-gray-400">Select a discipline to begin your next discovery.</p>
+        </div>
+
+        <!-- Grid Layout from Sketch -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
+            
+            <!-- Card -->
+            <div class="subject-card">
+                <div class="card-inner rounded-3xl p-8 flex flex-col items-center text-center">
+                    <div class="mb-6 w-20 h-20 flex items-center justify-center">
+                        <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-3">Physics</h2>
+                    <p class="text-gray-500">Laws of motion, energy, and the universe.</p>
+                </div>
+            </div>
+
+            <!-- Card -->
+            <div class="subject-card">
+                <div class="card-inner rounded-3xl p-8 flex flex-col items-center text-center">
+                    <div class="mb-6 w-20 h-20 flex items-center justify-center">
+                       <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517M11.414 15.414a2 2 0 01-1.022.547l-2.387.477a6 6 0 01-3.86-.517M14 4a6 6 0 00-8 0M14 4v12M10 4v12"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-3">Chemistry</h2>
+                    <p class="text-gray-500">Reactions, molecules, and matter.</p>
+                </div>
+            </div>
+
+            <!-- Card -->
+            <div class="subject-card">
+                <div class="card-inner rounded-3xl p-8 flex flex-col items-center text-center">
+                    <div class="mb-6 w-20 h-20 flex items-center justify-center">
+                        <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 3l-1.879 1.879a5.954 5.954 0 000 8.414L12 19.168l5.879-5.875a5.954 5.954 0 000-8.414L16 3M12 21v-4"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-3">Biology</h2>
+                    <p class="text-gray-500">Life, organisms, and ecosystems.</p>
+                </div>
+            </div>
+
+            <!-- Card -->
+            <div class="subject-card">
+                <div class="card-inner rounded-3xl p-8 flex flex-col items-center text-center">
+                    <div class="mb-6 w-20 h-20 flex items-center justify-center">
+                       <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h10a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.8 11.25A2.25 2.25 0 0010.05 9h3.9a2.25 2.25 0 002.25 2.25M12 15v.01"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-3">Env. Science</h2>
+                    <p class="text-gray-500">Ecology, climate, and sustainability.</p>
+                </div>
+            </div>
+            
+            <!-- Card -->
+            <div class="subject-card">
+                <div class="card-inner rounded-3xl p-8 flex flex-col items-center text-center">
+                    <div class="mb-6 w-20 h-20 flex items-center justify-center">
+                        <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3H4a2 2 0 00-2 2v14a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2h-5m-4 0v5.472A6.984 6.984 0 0012 9c1.654 0 3.198-.678 4.288-1.764M15 3v5.472A6.984 6.984 0 0112 9c-1.654 0-3.198-.678-4.288-1.764M12 9c-2.378 0-4.493 1.255-5.652 3.121"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-3">Electronics</h2>
+                    <p class="text-gray-500">Circuits, sensors, and connectivity.</p>
+                </div>
+            </div>
+            
+
+
+        </div>
+    </main>
+
+</body>
+</html>
+
