@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Predator-Prey Population Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { 
+            --bg-color: #020617; 
+            --card-color: rgba(15, 23, 42, 0.7);
+            --border-color: #1e293b; 
+            --text-light: #e2e8f0;
+            --accent-color: #84cc16; /* Lime Green */
+            --prey-color: #22c55e;
+            --predator-color: #ef4444;
+        }
+        body { background-color: var(--bg-color); color: var(--text-light); font-family: 'Inter', sans-serif; }
+        .glass-card { background: var(--card-color); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-color); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: var(--border-color); border-radius: 99px; outline: none; transition: background-color 0.2s ease; }
+        input[type=range]:hover { background: #334155; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+            border-radius: 50%; background: var(--accent-color); border: 2px solid var(--text-light);
+            cursor: pointer; transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+            box-shadow: 0 0 0 2px rgba(132, 204, 22, 0.2);
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(132, 204, 22, 0.4); }
+        .sim-button {
+            background: var(--accent-color); color: var(--bg-color);
+            transition: all .2s ease; box-shadow: 0 4px 10px rgba(0,0,0,.3);
+        }
+        .sim-button:hover { background: #a3e635; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,.4); }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto max-w-7xl">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">Ecological Population Dynamics</h1>
+            <p class="mt-2 text-slate-400 max-w-2xl mx-auto">An agent-based simulator for predator-prey interactions using Lotka-Volterra dynamics.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Simulation Canvas -->
+            <div class="glass-card shadow-2xl p-2 rounded-2xl lg:col-span-2">
+                <canvas id="simulation-canvas" class="w-full h-[500px] md:h-[600px] rounded-lg"></canvas>
+            </div>
+            
+            <!-- Controls & Analysis Column -->
+            <div class="space-y-6">
+                 <h2 class="text-2xl font-bold text-center text-slate-300">Ecosystem Parameters</h2>
+                <!-- Lotka-Volterra Parameters -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-lime-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        Model Coefficients
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                        <div>
+                            <label for="prey-growth" class="font-medium text-slate-300 flex justify-between">Prey Growth (α): <span id="prey-growth-val">1.0</span></label>
+                            <input type="range" id="prey-growth" min="0.5" max="2.0" step="0.1" value="1.0">
+                        </div>
+                        <div>
+                            <label for="predation-rate" class="font-medium text-slate-300 flex justify-between">Predation Rate (β): <span id="predation-rate-val">0.01</span></label>
+                            <input type="range" id="predation-rate" min="0.005" max="0.05" step="0.001" value="0.01">
+                        </div>
+                        <div>
+                            <label for="predator-efficiency" class="font-medium text-slate-300 flex justify-between">Predator Efficiency (γ): <span id="predator-efficiency-val">0.5</span></label>
+                            <input type="range" id="predator-efficiency" min="0.1" max="1.0" step="0.05" value="0.5">
+                        </div>
+                         <div>
+                            <label for="predator-death" class="font-medium text-slate-300 flex justify-between">Predator Death (δ): <span id="predator-death-val">0.5</span></label>
+                            <input type="range" id="predator-death" min="0.1" max="2.0" step="0.1" value="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Initial Populations & Analysis -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                     <h3 class="font-bold text-lg text-lime-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+                        Population Analysis
+                    </h3>
+                     <div class="text-sm space-y-4">
+                        <div>
+                            <label for="prey-initial" class="font-medium text-slate-300 flex justify-between">Initial Prey: <span id="prey-initial-val">80</span></label>
+                            <input type="range" id="prey-initial" min="10" max="200" value="80">
+                        </div>
+                        <div>
+                            <label for="predator-initial" class="font-medium text-slate-300 flex justify-between">Initial Predators: <span id="predator-initial-val">20</span></label>
+                            <input type="range" id="predator-initial" min="5" max="100" value="20">
+                        </div>
+                    </div>
+                    <canvas id="graph-canvas" class="w-full h-32 mt-2 rounded-lg bg-slate-900/50 border border-slate-700"></canvas>
+                </div>
+                
+                <!-- Time Controls -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl flex flex-col justify-center gap-4">
+                     <div>
+                        <label for="time-speed" class="font-medium text-slate-300 text-sm flex justify-between">Simulation Speed: <span id="speed-val">x1</span></label>
+                        <input type="range" id="time-speed" min="1" max="10" step="1" value="1">
+                    </div>
+                    <div class="flex gap-4">
+                        <button id="play-pause-btn" class="w-full sim-button font-bold py-3 px-4 rounded-lg flex items-center justify-center">
+                            <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2"><path d="M8 5v14l11-7z"></path></svg>
+                            <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2 hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+                            <span id="play-pause-text">Start</span>
+                        </button>
+                        <button id="reset-btn" class="w-full bg-slate-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-center">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path></svg>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() {
+    const simCanvas = document.getElementById('simulation-canvas');
+    const simCtx = simCanvas.getContext('2d');
+    const graphCanvas = document.getElementById('graph-canvas');
+    const graphCtx = graphCanvas.getContext('2d');
+    
+    const inputs = {
+        alpha: document.getElementById('prey-growth'),
+        beta: document.getElementById('predation-rate'),
+        gamma: document.getElementById('predator-efficiency'),
+        delta: document.getElementById('predator-death'),
+        prey0: document.getElementById('prey-initial'),
+        predator0: document.getElementById('predator-initial'),
+        timeSpeed: document.getElementById('time-speed'),
+    };
+    const valueSpans = {
+        alpha: document.getElementById('prey-growth-val'),
+        beta: document.getElementById('predation-rate-val'),
+        gamma: document.getElementById('predator-efficiency-val'),
+        delta: document.getElementById('predator-death-val'),
+        prey0: document.getElementById('prey-initial-val'),
+        predator0: document.getElementById('predator-initial-val'),
+        timeSpeed: document.getElementById('speed-val'),
+    };
+    
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const playPauseText = document.getElementById('play-pause-text');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let state = { alpha: 1.0, beta: 0.01, gamma: 0.5, delta: 0.5, prey0: 80, predator0: 20, timeSpeed: 1 };
+    let sim = { t: 0, prey: [], predators: [], running: false, history: [] };
+    let rafId = null;
+    const DT = 0.1; 
+
+    function resizeCanvas() {
+        const simRect = simCanvas.parentElement.getBoundingClientRect();
+        simCanvas.width = simRect.width;
+        simCanvas.height = simRect.height > 100 ? simRect.height : 600;
+
+        const graphRect = graphCanvas.parentElement.getBoundingClientRect();
+        graphCanvas.width = graphRect.width - 40; 
+        graphCanvas.height = 128;
+        
+        draw();
+    }
+
+    function resetSimulation() {
+        if (sim.running) togglePlayPause();
+        updateStateFromInputs();
+        sim.t = 0;
+        sim.history = [];
+        sim.prey = [];
+        sim.predators = [];
+        for(let i=0; i<state.prey0; i++) sim.prey.push(createAgent('prey'));
+        for(let i=0; i<state.predator0; i++) sim.predators.push(createAgent('predator'));
+        draw();
+    }
+    
+    function createAgent(type) {
+        return {
+            x: Math.random() * simCanvas.width,
+            y: Math.random() * simCanvas.height,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            type: type,
+            energy: type === 'predator' ? 50 : 0,
+        };
+    }
+
+    function updateStateFromInputs() {
+        Object.keys(inputs).forEach(key => {
+            const el = inputs[key];
+            const span = valueSpans[key];
+            let value = parseFloat(el.value);
+            state[key] = value;
+            if(key === 'beta') span.textContent = value.toFixed(3);
+            else if (key.match(/alpha|gamma|delta/)) span.textContent = value.toFixed(1);
+            else span.textContent = value.toFixed(0);
+        });
+        if (!sim.running) {
+             state.prey0 = parseFloat(inputs.prey0.value);
+             state.predator0 = parseFloat(inputs.predator0.value);
+        }
+    }
+
+    function physicsStep() {
+        const timeMultiplier = state.timeSpeed * (DT / 5);
+        
+        // Lotka-Volterra equations for population counts
+        const preyN = sim.prey.length;
+        const predN = sim.predators.length;
+        const dPrey = (state.alpha * preyN - state.beta * preyN * predN) * timeMultiplier;
+        const dPred = (state.beta * state.gamma * preyN * predN - state.delta * predN) * timeMultiplier;
+
+        // Add/remove agents based on equations
+        if(dPrey > 0 && Math.random() < dPrey % 1) sim.prey.push(createAgent('prey'));
+        else if (dPrey < 0 && Math.random() < Math.abs(dPrey % 1)) sim.prey.pop();
+        
+        if(dPred > 0 && Math.random() < dPred % 1) sim.predators.push(createAgent('predator'));
+        else if (dPred < 0 && Math.random() < Math.abs(dPred % 1)) sim.predators.pop();
+
+        // Agent movement and interaction
+        sim.prey.forEach(p => moveAgent(p, 1));
+        sim.predators.forEach(p => {
+            moveAgent(p, 2);
+            p.energy -= 0.1 * state.timeSpeed;
+            if(p.energy <= 0) sim.predators.splice(sim.predators.indexOf(p), 1);
+        });
+        
+        // Predation
+        for(let i = sim.predators.length - 1; i >= 0; i--) {
+            const pred = sim.predators[i];
+            for(let j = sim.prey.length - 1; j >= 0; j--) {
+                const prey = sim.prey[j];
+                const dist = Math.hypot(pred.x - prey.x, pred.y - prey.y);
+                if (dist < 10) {
+                    sim.prey.splice(j, 1);
+                    pred.energy += 20;
+                    break; 
+                }
+            }
+        }
+
+        sim.t += timeMultiplier;
+        if (sim.history.length === 0 || sim.t - sim.history[sim.history.length - 1].t > 0.5) {
+            sim.history.push({ t: sim.t, prey: sim.prey.length, pred: sim.predators.length });
+            if (sim.history.length > 200) sim.history.shift();
+        }
+    }
+    
+    function moveAgent(agent, speed) {
+        agent.x += agent.vx * speed;
+        agent.y += agent.vy * speed;
+        if(agent.x < 0 || agent.x > simCanvas.width) agent.vx *= -1;
+        if(agent.y < 0 || agent.y > simCanvas.height) agent.vy *= -1;
+    }
+
+    function loop() {
+        if (!sim.running) return;
+        physicsStep();
+        draw();
+        rafId = requestAnimationFrame(loop);
+    }
+
+    function draw() {
+        simCtx.fillStyle = '#0f172a';
+        simCtx.fillRect(0, 0, simCanvas.width, simCanvas.height);
+
+        sim.prey.forEach(p => drawAgent(p, 'var(--prey-color)', 4));
+        sim.predators.forEach(p => drawAgent(p, 'var(--predator-color)', 6));
+        
+        drawGraph();
+    }
+    
+    function drawAgent(agent, color, size) {
+        simCtx.fillStyle = color;
+        simCtx.beginPath();
+        simCtx.arc(agent.x, agent.y, size, 0, Math.PI * 2);
+        simCtx.fill();
+    }
+
+    function drawGraph() {
+        graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+        if (sim.history.length < 2) return;
+        
+        const maxPrey = Math.max(50, ...sim.history.map(p => p.prey));
+        const maxPred = Math.max(20, ...sim.history.map(p => p.pred));
+        const tStart = sim.history[0].t;
+        const tEnd = sim.history[sim.history.length - 1].t;
+        const timeWindow = Math.max(20, tEnd - tStart);
+
+        function plot(key, color, maxVal) {
+            graphCtx.strokeStyle = color; graphCtx.lineWidth = 2; graphCtx.beginPath();
+            sim.history.forEach((p, i) => {
+                const x = ((p.t - tStart) / timeWindow) * graphCanvas.width;
+                const y = graphCanvas.height - (p[key] / maxVal) * graphCanvas.height;
+                if (i === 0) graphCtx.moveTo(x, y); else graphCtx.lineTo(x, y);
+            });
+            graphCtx.stroke();
+        }
+
+        plot('prey', 'var(--prey-color)', maxPrey);
+        plot('pred', 'var(--predator-color)', maxPred);
+    }
+    
+    function togglePlayPause() {
+        sim.running = !sim.running;
+        if (sim.running) {
+            playPauseText.textContent = 'Pause';
+            playIcon.classList.add('hidden');
+            pauseIcon.classList.remove('hidden');
+            loop();
+        } else {
+            playPauseText.textContent = 'Play';
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+            if(rafId) cancelAnimationFrame(rafId);
+        }
+    }
+
+    // --- Event Handlers ---
+    Object.values(inputs).forEach(input => input.addEventListener('input', () => {
+        updateStateFromInputs();
+        if(!sim.running) resetSimulation();
+    }));
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    resetBtn.addEventListener('click', resetSimulation);
+    window.addEventListener('resize', resizeCanvas);
+    
+    resetSimulation();
+})();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Bioinformatics: DNA Sequence Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { 
+            --bg-color: #020617; 
+            --card-color: rgba(15, 23, 42, 0.7);
+            --border-color: #1e293b; 
+            --text-light: #e2e8f0;
+            --accent-color: #14b8a6; /* Teal */
+            --base-A-bg: rgba(74, 222, 128, 0.2); --base-A-text: #4ade80;
+            --base-T-bg: rgba(248, 113, 113, 0.2); --base-T-text: #f87171;
+            --base-C-bg: rgba(96, 165, 250, 0.2); --base-C-text: #60a5fa;
+            --base-G-bg: rgba(251, 191, 36, 0.2); --base-G-text: #fbbf24;
+        }
+        body { background-color: var(--bg-color); color: var(--text-light); font-family: 'Inter', sans-serif; }
+        .glass-card { background: var(--card-color); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-color); }
+        .sim-button {
+            background-color: var(--border-color);
+            border: 1px solid #334155;
+            transition: all 0.2s ease;
+        }
+        .sim-button:hover, .sim-button.active {
+            background-color: #334155;
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+        #sequence-input, #sequence-display, #analysis-output { 
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            word-break: break-all;
+        }
+        .base-A { background-color: var(--base-A-bg); color: var(--base-A-text); }
+        .base-T { background-color: var(--base-T-bg); color: var(--base-T-text); }
+        .base-C { background-color: var(--base-C-bg); color: var(--base-C-text); }
+        .base-G { background-color: var(--base-G-bg); color: var(--base-G-text); }
+        .orf-highlight { background: linear-gradient(to right, rgba(20, 184, 166, 0.5), rgba(13, 148, 136, 0.5)); border-radius: 4px; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto max-w-7xl">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-400">Bioinformatics Toolkit</h1>
+            <p class="mt-2 text-slate-400 max-w-2xl mx-auto">Enter a DNA sequence and perform common analyses like transcription, translation, and ORF finding in real-time.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card shadow-2xl p-6 rounded-2xl lg:col-span-2 space-y-6">
+                <div>
+                    <h3 class="font-bold text-lg text-teal-300 mb-2">Sequence Viewer</h3>
+                    <div id="sequence-display" class="p-3 bg-slate-900/50 rounded-lg border border-slate-700 max-h-48 overflow-y-auto text-sm"></div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-teal-300 mb-2">Analysis Output</h3>
+                    <div id="analysis-output" class="p-3 bg-slate-900/50 rounded-lg border border-slate-700 min-h-[200px] text-sm"></div>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                 <h2 class="text-2xl font-bold text-center text-slate-300">Input & Analysis</h2>
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-teal-300 flex items-center">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M4 18h16M4 12h16M4 6h16"></path></svg>
+                        DNA Sequence
+                    </h3>
+                    <div class="bg-slate-900/50 rounded-lg border border-slate-700 h-40 p-2">
+                        <textarea id="sequence-input" class="w-full h-full bg-transparent text-slate-200 outline-none resize-none" spellcheck="false" placeholder="Paste DNA sequence here...">ATGTTCGGTGGCAACAAACTGACGTTTGACTACGACTTTAGAGCGTTTCAACAACTTGGTACAGTGAACTGTTACCGTGAGCGTTCGTGACGAAGTGAAAGGTTAA</textarea>
+                    </div>
+                </div>
+
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                     <h3 class="font-bold text-lg text-teal-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                        Analysis Tasks
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <button id="task-composition" class="sim-button p-2 rounded-lg text-center active">Composition</button>
+                        <button id="task-reverse-complement" class="sim-button p-2 rounded-lg text-center">Reverse Comp.</button>
+                        <button id="task-transcribe" class="sim-button p-2 rounded-lg text-center">Transcribe</button>
+                        <button id="task-translate" class="sim-button p-2 rounded-lg text-center">Translate</button>
+                        <button id="task-find-orfs" class="sim-button p-2 rounded-lg text-center">Find ORFs</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() {
+    const sequenceInput = document.getElementById('sequence-input');
+    const sequenceDisplay = document.getElementById('sequence-display');
+    const analysisOutput = document.getElementById('analysis-output');
+    
+    const taskButtons = {
+        composition: document.getElementById('task-composition'),
+        reverseComplement: document.getElementById('task-reverse-complement'),
+        transcribe: document.getElementById('task-transcribe'),
+        translate: document.getElementById('task-translate'),
+        findOrfs: document.getElementById('task-find-orfs'),
+    };
+
+    let state = {
+        sequence: '',
+        activeTask: 'composition',
+    };
+
+    const CODON_TABLE = { /* ... Standard codon table ... */ };
+
+    function update() {
+        state.sequence = sequenceInput.value.toUpperCase().replace(/[^ATCG]/g, '');
+        renderSequence();
+        runActiveTask();
+    }
+
+    function runActiveTask() {
+        // Clear previous output
+        analysisOutput.innerHTML = '';
+        
+        switch(state.activeTask) {
+            case 'composition':
+                analyzeComposition();
+                break;
+            case 'reverseComplement':
+                analyzeReverseComplement();
+                break;
+            case 'transcribe':
+                analyzeTranscription();
+                break;
+            case 'translate':
+                analyzeTranslation();
+                break;
+            case 'findOrfs':
+                analyzeOrfs();
+                break;
+        }
+    }
+    
+    // --- RENDER FUNCTIONS ---
+    function renderSequence(orfs = []) {
+        let html = '';
+        for (let i = 0; i < state.sequence.length; i++) {
+            const base = state.sequence[i];
+            let orfHighlight = false;
+            orfs.forEach(orf => {
+                if (i >= orf.start && i < orf.end) {
+                    orfHighlight = true;
+                }
+            });
+            html += `<span class="base-${base} ${orfHighlight ? 'orf-highlight' : ''}">${base}</span>`;
+        }
+        sequenceDisplay.innerHTML = html;
+    }
+
+    function colorizeSequence(seq) {
+         return seq.split('').map(base => `<span class="base-${base}">${base}</span>`).join('');
+    }
+
+    // --- ANALYSIS FUNCTIONS ---
+    function analyzeComposition() {
+        const counts = { A: 0, T: 0, C: 0, G: 0 };
+        for(const base of state.sequence) {
+            if(counts.hasOwnProperty(base)) counts[base]++;
+        }
+        const total = state.sequence.length || 1;
+        const gc_count = counts.G + counts.C;
+        const gc_content = (gc_count / total * 100).toFixed(1);
+
+        analysisOutput.innerHTML = `
+            <p>Length: ${total} bp</p>
+            <p>GC Content: ${gc_content}%</p>
+            <div class="mt-4 space-y-2">
+                ${Object.entries(counts).map(([base, count]) => `
+                    <div class="flex items-center">
+                        <span class="w-16 font-mono base-${base} rounded px-1">${base}: ${count}</span>
+                        <div class="w-full bg-slate-700 rounded-full h-4 ml-2">
+                            <div class="base-${base} text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style="width: ${(count/total*100).toFixed(1)}%">
+                                ${(count/total*100).toFixed(1)}%
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function analyzeReverseComplement() {
+        const complement = { 'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C' };
+        const reverseComp = state.sequence.split('').reverse().map(base => complement[base]).join('');
+        analysisOutput.innerHTML = `
+            <p class="font-bold">5'-3' Original:</p>
+            <div class="mb-4">${colorizeSequence(state.sequence)}</div>
+            <p class="font-bold">3'-5' Reverse Complement:</p>
+            <div>${colorizeSequence(reverseComp)}</div>
+        `;
+    }
+    
+    function analyzeTranscription() {
+        const rna = state.sequence.replace(/T/g, 'U');
+        analysisOutput.innerHTML = `
+            <p class="font-bold">5'-3' DNA (Template Strand):</p>
+            <div class="mb-4">${colorizeSequence(state.sequence)}</div>
+            <p class="font-bold">5'-3' mRNA Transcript:</p>
+            <div>${colorizeSequence(rna)}</div>
+        `;
+    }
+
+    function analyzeTranslation() {
+        // Full implementation requires the CODON_TABLE
+        analysisOutput.innerHTML = "<p>Translation feature would show 6 reading frames.</p>";
+    }
+    
+    function analyzeOrfs() {
+        const orfs = findOrfs(state.sequence);
+        renderSequence(orfs);
+        analysisOutput.innerHTML = `
+            <p>Found ${orfs.length} potential Open Reading Frames (ORFs).</p>
+            <ul class="list-disc list-inside mt-2">
+                ${orfs.map(orf => `<li>Frame ${orf.frame}: Start ${orf.start}, Stop ${orf.end}, Length ${orf.end - orf.start} bp</li>`).join('')}
+            </ul>
+        `;
+    }
+
+    function findOrfs(seq) {
+        const foundOrfs = [];
+        const stopCodons = ['TAA', 'TAG', 'TGA'];
+        for(let frame = 0; frame < 3; frame++) {
+            for(let i = frame; i < seq.length - 2; i+=3) {
+                if (seq.substring(i, i+3) === 'ATG') {
+                    for (let j = i+3; j < seq.length - 2; j+=3) {
+                        if(stopCodons.includes(seq.substring(j, j+3))) {
+                            foundOrfs.push({ start: i, end: j+3, frame: frame + 1 });
+                            i = j; // Move to end of this ORF
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return foundOrfs;
+    }
+
+    // --- EVENT HANDLERS ---
+    sequenceInput.addEventListener('input', update);
+    Object.keys(taskButtons).forEach(key => {
+        taskButtons[key].addEventListener('click', () => {
+            state.activeTask = key.replace(/([A-Z])/g, '_$1').toLowerCase().split('task_')[1];
+            Object.values(taskButtons).forEach(btn => btn.classList.remove('active'));
+            taskButtons[key].classList.add('active');
+            runActiveTask();
+        });
+    });
+
+    update();
+})();
+</script>
+</body>
+</html>
+

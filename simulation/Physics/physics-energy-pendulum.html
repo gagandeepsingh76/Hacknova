@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Pendulum & Energy Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { 
+            --bg-color: #020617; 
+            --card-color: rgba(15, 23, 42, 0.7);
+            --border-color: #1e293b; 
+            --text-light: #e2e8f0;
+            --accent-color: #38bdf8;
+            --energy-ke: #10b981;    /* Green */
+            --energy-pe: #f59e0b;    /* Orange */
+            --energy-total: #94a3b8; /* Slate */
+        }
+        body { background-color: var(--bg-color); color: var(--text-light); font-family: 'Inter', sans-serif; }
+        .glass-card { background: var(--card-color); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-color); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: var(--border-color); border-radius: 99px; outline: none; transition: background-color 0.2s ease; }
+        input[type=range]:hover { background: #334155; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+            border-radius: 50%; background: var(--accent-color); border: 2px solid var(--text-light);
+            cursor: pointer; transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.4); }
+        .sim-button {
+            background: var(--accent-color); color: var(--bg-color);
+            transition: all .2s ease; box-shadow: 0 4px 10px rgba(0,0,0,.3);
+        }
+        .sim-button:hover { background: #0ea5e9; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,.4); }
+        canvas { touch-action: none; cursor: grab; }
+        canvas:active { cursor: grabbing; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto max-w-7xl">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-cyan-400">Interactive Pendulum Simulator</h1>
+            <p class="mt-2 text-slate-400 max-w-2xl mx-auto">Visualize energy transformation by dragging the pendulum and adjusting physical constants.</p>
+        </header>
+
+        <div class="glass-card shadow-2xl p-2 rounded-2xl mb-6">
+            <canvas id="simulation-canvas" class="w-full h-72 md:h-[500px] rounded-lg"></canvas>
+        </div>
+        
+        <div>
+            <h2 class="text-2xl font-bold text-center mb-4 text-slate-300">Control Deck</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Pendulum Properties -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-sky-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="2" x2="12" y2="22" /><path d="M12 12 6 6" /><path d="m18 6-6 6" /></svg>
+                        Pendulum Properties
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                        <div>
+                            <label for="pendulum-length" class="font-medium text-slate-300 flex justify-between">Length: <span id="len-val">1.5 m</span></label>
+                            <input type="range" id="pendulum-length" min="0.5" max="3.0" step="0.1" value="1.5">
+                        </div>
+                        <div>
+                            <label for="pendulum-mass" class="font-medium text-slate-300 flex justify-between">Mass: <span id="m-val">1.0 kg</span></label>
+                            <input type="range" id="pendulum-mass" min="0.1" max="5.0" step="0.1" value="1.0">
+                        </div>
+                        <div>
+                            <label for="initial-angle" class="font-medium text-slate-300 flex justify-between">Initial Angle: <span id="ang-val">45°</span></label>
+                            <input type="range" id="initial-angle" min="5" max="90" value="45">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environment -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-sky-300 flex items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21.5 12.5c0-5.25-4.25-9.5-9.5-9.5S2.5 7.25 2.5 12.5c0 4.23 2.75 7.82 6.5 9.06.4.07.55-.17.55-.38V19.5c-2.67.58-3.23-1.28-3.23-1.28-.36-.92-.88-1.17-.88-1.17-.72-.49.05-.48.05-.48.8.06 1.22.82 1.22.82.71 1.21 1.86.86 2.31.66.07-.51.28-.86.51-1.06-1.76-.2-3.61-.88-3.61-3.92 0-.87.31-1.58.82-2.13-.08-.2-.36-1.01.08-2.1 0 0 .67-.21 2.18.82.63-.18 1.31-.26 1.99-.27.68 0 1.36.09 1.99.27 1.51-1.04 2.18-.82 2.18-.82.44 1.09.16 1.9.08 2.1.51.55.82 1.26.82 2.13 0 3.05-1.86 3.72-3.63 3.92.29.25.54.73.54 1.48v2.18c0 .21.15.45.55.38C18.75 20.32 21.5 16.73 21.5 12.5z"/></svg>
+                        Environment
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                         <div>
+                            <label for="gravity" class="font-medium text-slate-300 flex justify-between">Gravity: <span id="g-val">9.81 m/s²</span></label>
+                            <input type="range" id="gravity" min="1" max="25" step="0.01" value="9.81">
+                        </div>
+                        <div>
+                            <label for="friction" class="font-medium text-slate-300 flex justify-between">Friction: <span id="fric-val">0.05</span></label>
+                            <input type="range" id="friction" min="0" max="0.5" step="0.01" value="0.05">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="glass-card shadow-lg p-5 rounded-2xl flex flex-col justify-center">
+                    <div class="flex gap-4">
+                        <button id="play-pause-btn" class="w-full sim-button font-bold py-3 px-4 rounded-lg flex items-center justify-center">
+                            <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2"><path d="M8 5v14l11-7z"/></svg>
+                            <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2 hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            <span id="play-pause-text">Play</span>
+                        </button>
+                        <button id="reset-btn" class="w-full bg-slate-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M3 2v6h6"/><path d="M21 12A9 9 0 0 0 6 5.3L3 8"/><path d="M21 22v-6h-6"/><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"/></svg>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('simulation-canvas');
+    const ctx = canvas.getContext('2d');
+    const inputs = {
+        length: document.getElementById('pendulum-length'), mass: document.getElementById('pendulum-mass'),
+        angle: document.getElementById('initial-angle'), gravity: document.getElementById('gravity'),
+        friction: document.getElementById('friction'),
+    };
+    const valueSpans = {
+        length: document.getElementById('len-val'), mass: document.getElementById('m-val'),
+        angle: document.getElementById('ang-val'), gravity: document.getElementById('g-val'),
+        friction: document.getElementById('fric-val'),
+    };
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const playPauseText = document.getElementById('play-pause-text');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let state = { L: 1.5, m: 1.0, g: 9.81, theta0: 45 * Math.PI/180, b: 0.05,
+                  theta: 45 * Math.PI/180, omega: 0, KE: 0, PE: 0, TE: 0 };
+    let running = false, rafId = null, isDragging = false;
+    let pivot = { x: 0, y: 0 }, scale = 100;
+    const DT = 0.016; // Time step
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height > 100 ? rect.height : 500;
+        pivot.x = canvas.width / 2;
+        pivot.y = 50;
+        scale = (canvas.height - pivot.y - 80) / state.L;
+        draw();
+    }
+
+    function updateStateFromInputs() {
+        state.L = parseFloat(inputs.length.value);
+        state.m = parseFloat(inputs.mass.value);
+        state.g = parseFloat(inputs.gravity.value);
+        state.b = parseFloat(inputs.friction.value);
+        if (!running && !isDragging) {
+            state.theta0 = parseFloat(inputs.angle.value) * Math.PI / 180;
+            state.theta = state.theta0;
+            state.omega = 0;
+        }
+    }
+    
+    function physicsStep() {
+        const alpha = -(state.g / state.L) * Math.sin(state.theta) - (state.b / state.m) * state.omega;
+        state.omega += alpha * DT;
+        state.theta += state.omega * DT;
+        
+        const h = state.L * (1 - Math.cos(state.theta));
+        const v = state.L * Math.abs(state.omega);
+        state.PE = state.m * state.g * h;
+        state.KE = 0.5 * state.m * v * v;
+        const h0 = state.L * (1- Math.cos(state.theta0));
+        state.TE = state.m * state.g * h0; // Total energy based on initial height
+    }
+    
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const bobRadius = Math.max(10, 5 + state.m * 2);
+        scale = (canvas.height - pivot.y - bobRadius - 20) / state.L;
+        
+        drawPendulum(bobRadius);
+        drawEnergyUI();
+        drawHUD();
+    }
+
+    function drawPendulum(bobRadius) {
+        const x = pivot.x + state.L * scale * Math.sin(state.theta);
+        const y = pivot.y + state.L * scale * Math.cos(state.theta);
+
+        // String
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(pivot.x, pivot.y);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+
+        // Pivot
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.arc(pivot.x, pivot.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bob
+        const gradient = ctx.createRadialGradient(x-3, y-3, 2, x, y, bobRadius);
+        gradient.addColorStop(0, '#a5f3fc');
+        gradient.addColorStop(1, '#38bdf8');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, bobRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#020617';
+        ctx.stroke();
+    }
+    
+    function drawEnergyUI() {
+        const barWidth = 30;
+        const spacing = 15;
+        const chartHeight = 150;
+        const startX = canvas.width - (barWidth + spacing) * 3;
+        const startY = canvas.height - 20;
+        
+        const maxEnergy = state.TE > 0.1 ? state.TE : 0.1; // Avoid division by zero
+        
+        const keHeight = (state.KE / maxEnergy) * chartHeight;
+        const peHeight = (state.PE / maxEnergy) * chartHeight;
+        const teHeight = Math.min(state.KE + state.PE, state.TE) / maxEnergy * chartHeight;
+
+        // Draw Bars
+        drawBar(startX, startY, barWidth, keHeight, 'var(--energy-ke)', 'KE');
+        drawBar(startX + barWidth + spacing, startY, barWidth, peHeight, 'var(--energy-pe)', 'PE');
+        drawBar(startX + 2 * (barWidth + spacing), startY, barWidth, teHeight, 'var(--energy-total)', 'Total');
+    }
+
+    function drawBar(x, y, w, h, color, label) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y - h, w, h);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '12px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, x + w / 2, y + 15);
+    }
+    
+    function drawHUD() {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.6)';
+        ctx.fillRect(10, 10, 180, 50);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '14px Inter';
+        ctx.textAlign = 'left';
+        const angleDeg = (state.theta * 180 / Math.PI).toFixed(1);
+        const velocity = (state.omega * state.L).toFixed(2);
+        ctx.fillText(`Angle: ${angleDeg}°`, 20, 30);
+        ctx.fillText(`Velocity: ${velocity} m/s`, 20, 50);
+    }
+
+    function loop() {
+        if (!running) return;
+        physicsStep();
+        draw();
+        rafId = requestAnimationFrame(loop);
+    }
+
+    function togglePlayPause() {
+        running = !running;
+        if (running) {
+            state.theta0 = state.theta; // Update total energy reference on play
+            playPauseText.textContent = 'Pause';
+            playIcon.classList.add('hidden');
+            pauseIcon.classList.remove('hidden');
+            loop();
+        } else {
+            playPauseText.textContent = 'Play';
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+            if(rafId) cancelAnimationFrame(rafId);
+        }
+    }
+
+    function resetSimulation() {
+        if (running) togglePlayPause();
+        updateStateFromInputs();
+        state.theta = state.theta0;
+        state.omega = 0;
+        physicsStep(); // calculate initial energies
+        draw();
+    }
+    
+    function handleInputChange(e) {
+        updateStateFromInputs();
+        const id = e.target.id.split('-')[1];
+        let val = parseFloat(e.target.value);
+        let suffix = { length: ' m', mass: ' kg', angle: '°', gravity: ' m/s²', friction: ''}[id];
+        let decimals = (id === 'gravity' || id === 'friction') ? 2 : (id==='length' || id==='mass') ? 1 : 0;
+        valueSpans[id].textContent = val.toFixed(decimals) + suffix;
+        
+        if (!running) {
+            resizeCanvas(); // Recalculate scale if length changes
+            physicsStep();
+            draw();
+        }
+    }
+    
+    function handleMouseDown(e) {
+        if(running) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const x = pivot.x + state.L * scale * Math.sin(state.theta);
+        const y = pivot.y + state.L * scale * Math.cos(state.theta);
+
+        if (Math.hypot(mouseX-x, mouseY-y) < 30) {
+            isDragging = true;
+            canvas.style.cursor = 'grabbing';
+        }
+    }
+
+    function handleMouseMove(e) {
+        if (!isDragging) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        state.theta = Math.atan2(mouseX - pivot.x, mouseY - pivot.y);
+        state.theta = Math.max(-Math.PI/2, Math.min(Math.PI/2, state.theta)); // Clamp angle
+        state.theta0 = state.theta;
+        state.omega = 0;
+        inputs.angle.value = (state.theta * 180 / Math.PI).toFixed(0);
+        valueSpans.angle.textContent = `${inputs.angle.value}°`;
+        physicsStep();
+        draw();
+    }
+    
+    function handleMouseUp() {
+        isDragging = false;
+        canvas.style.cursor = 'grab';
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    Object.values(inputs).forEach(input => input.addEventListener('input', handleInputChange));
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    resetBtn.addEventListener('click', resetSimulation);
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    
+    Object.values(inputs).forEach(input => input.dispatchEvent(new Event('input')));
+    resizeCanvas();
+})();
+</script>
+</body>
+</html>

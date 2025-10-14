@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Signal Processing Simulator: ADC & FFT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { 
+            --bg-color: #020617; 
+            --card-color: rgba(15, 23, 42, 0.7);
+            --border-color: #1e293b; 
+            --text-light: #e2e8f0;
+            --accent-color: #f97316; /* Orange */
+            --analog-color: #475569;
+            --reconstructed-color: #38bdf8;
+            --fft-color: #10b981;
+        }
+        body { background-color: var(--bg-color); color: var(--text-light); font-family: 'Inter', sans-serif; }
+        .glass-card { background: var(--card-color); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-color); }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: var(--border-color); border-radius: 99px; outline: none; transition: background-color 0.2s ease; }
+        input[type=range]:hover { background: #334155; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+            border-radius: 50%; background: var(--accent-color); border: 2px solid var(--text-light);
+            cursor: pointer; transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.4); }
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
+            padding-right: 2.5rem; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto max-w-7xl">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">Signal Processing Simulator</h1>
+            <p class="mt-2 text-slate-400 max-w-2xl mx-auto">Explore ADC sampling, aliasing, and FFT analysis of different signal types in real-time.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card shadow-2xl p-2 rounded-2xl lg:col-span-2">
+                <canvas id="simulation-canvas" class="w-full h-[500px] md:h-[600px] rounded-lg"></canvas>
+            </div>
+            
+            <div class="space-y-6">
+                 <h2 class="text-2xl font-bold text-center text-slate-300">Signal Controls</h2>
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-orange-300 flex items-center">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        Signal Generation
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                        <div>
+                            <label for="signal-type" class="font-medium text-slate-300">Signal Type</label>
+                            <select id="signal-type" class="w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                                <option value="sine">Sine Wave</option>
+                                <option value="square">Square Wave</option>
+                                <option value="triangle">Triangle Wave</option>
+                                <option value="sum_sine">Sum of Sines</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="frequency" class="font-medium text-slate-300 flex justify-between">Frequency (f₁): <span id="freq-val">5 Hz</span></label>
+                            <input type="range" id="frequency" min="1" max="50" step="0.5" value="5">
+                        </div>
+                         <div id="freq2-control">
+                            <label for="frequency2" class="font-medium text-slate-300 flex justify-between">Frequency (f₂): <span id="freq2-val">15 Hz</span></label>
+                            <input type="range" id="frequency2" min="1" max="50" step="0.5" value="15">
+                        </div>
+                        <div>
+                            <label for="amplitude" class="font-medium text-slate-300 flex justify-between">Amplitude: <span id="amp-val">1.0</span></label>
+                            <input type="range" id="amplitude" min="0.1" max="2.0" step="0.1" value="1.0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                     <h3 class="font-bold text-lg text-orange-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M17 18a2.2 2.2 0 0 1-1.8-1l-2.4-4.2a2.2 2.2 0 0 1 0-2l2.4-4.2a2.2 2.2 0 0 1 3.6 0l2.4 4.2a2.2 2.2 0 0 1 0 2l-2.4 4.2a2.2 2.2 0 0 1-1.8 1z"></path><path d="M7 2a2.2 2.2 0 0 1 1.8 1l2.4 4.2a2.2 2.2 0 0 1 0 2l-2.4 4.2a2.2 2.2 0 0 1-3.6 0L2.8 9.2a2.2 2.2 0 0 1 0-2L5.2 3a2.2 2.2 0 0 1 1.8-1z"></path></svg>
+                        ADC Sampling & Noise
+                    </h3>
+                     <div class="text-sm pt-2 space-y-4">
+                         <div>
+                            <label for="sampling-rate" class="font-medium text-slate-300 flex justify-between">Sampling Rate: <span id="sampling-rate-val">100 Hz</span></label>
+                            <input type="range" id="sampling-rate" min="10" max="200" step="1" value="100">
+                        </div>
+                        <div>
+                            <label for="noise" class="font-medium text-slate-300 flex justify-between">Noise Level: <span id="noise-val">0.1</span></label>
+                            <input type="range" id="noise" min="0" max="1" step="0.05" value="0.1">
+                        </div>
+                        <p class="flex justify-between text-slate-400 !mt-6">Nyquist Frequency: <span id="nyquist-val" class="font-mono text-white">50.0 Hz</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('simulation-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const inputs = {
+        type: document.getElementById('signal-type'),
+        freq1: document.getElementById('frequency'),
+        freq2: document.getElementById('frequency2'),
+        amp: document.getElementById('amplitude'),
+        samplingRate: document.getElementById('sampling-rate'),
+        noise: document.getElementById('noise'),
+    };
+    const valueSpans = {
+        freq1: document.getElementById('freq-val'),
+        freq2: document.getElementById('freq2-val'),
+        amp: document.getElementById('amp-val'),
+        samplingRate: document.getElementById('sampling-rate-val'),
+        noise: document.getElementById('noise-val'),
+    };
+    const analysis = {
+        nyquist: document.getElementById('nyquist-val'),
+    };
+    const freq2Control = document.getElementById('freq2-control');
+
+    let state = {};
+    const N_SAMPLES = 256;
+    let signalData = new Array(N_SAMPLES).fill(0);
+    let fftData = [];
+
+    function resizeCanvas() {
+        const simRect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = simRect.width;
+        canvas.height = simRect.height > 100 ? simRect.height : 600;
+        update();
+    }
+
+    function update() {
+        updateStateFromInputs();
+        generateAndProcessSignal();
+        draw();
+    }
+    
+    function updateStateFromInputs() {
+        state.type = inputs.type.value;
+        state.freq1 = parseFloat(inputs.freq1.value);
+        state.freq2 = parseFloat(inputs.freq2.value);
+        state.amp = parseFloat(inputs.amp.value);
+        state.samplingRate = parseFloat(inputs.samplingRate.value);
+        state.noise = parseFloat(inputs.noise.value);
+        
+        valueSpans.freq1.textContent = `${state.freq1.toFixed(1)} Hz`;
+        valueSpans.freq2.textContent = `${state.freq2.toFixed(1)} Hz`;
+        valueSpans.amp.textContent = state.amp.toFixed(1);
+        valueSpans.samplingRate.textContent = `${state.samplingRate.toFixed(0)} Hz`;
+        valueSpans.noise.textContent = state.noise.toFixed(2);
+        
+        analysis.nyquist.textContent = `${(state.samplingRate / 2).toFixed(1)} Hz`;
+        freq2Control.style.display = state.type === 'sum_sine' ? 'block' : 'none';
+    }
+
+    function generateAndProcessSignal() {
+        const dt = 1 / state.samplingRate;
+        for (let i = 0; i < N_SAMPLES; i++) {
+            const t = i * dt;
+            let value = 0;
+            switch(state.type) {
+                case 'sine':
+                    value = Math.sin(2 * Math.PI * state.freq1 * t);
+                    break;
+                case 'square':
+                    value = Math.sign(Math.sin(2 * Math.PI * state.freq1 * t));
+                    break;
+                case 'triangle':
+                    value = 2 * Math.abs(2 * (t * state.freq1 - Math.floor(t * state.freq1 + 0.5))) - 1;
+                    break;
+                case 'sum_sine':
+                     value = 0.6 * Math.sin(2 * Math.PI * state.freq1 * t) + 0.4 * Math.sin(2 * Math.PI * state.freq2 * t);
+                    break;
+            }
+            signalData[i] = value * state.amp + (Math.random() - 0.5) * state.noise;
+        }
+        
+        // FFT calculation
+        fftData = calculateFFT(signalData);
+    }
+    
+    function calculateFFT(data) {
+        const N = data.length;
+        const fftResult = [];
+        for (let k = 0; k < N / 2; k++) {
+            let re = 0, im = 0;
+            for (let n = 0; n < N; n++) {
+                const angle = -2 * Math.PI * k * n / N;
+                re += data[n] * Math.cos(angle);
+                im += data[n] * Math.sin(angle);
+            }
+            fftResult.push(Math.sqrt(re*re + im*im) / N);
+        }
+        return fftResult;
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawTimeDomain();
+        drawFreqDomain();
+    }
+
+    function drawTimeDomain() {
+        const g = { x: 50, y: 0, w: canvas.width - 60, h: canvas.height / 2 };
+        const timeWindow = N_SAMPLES / state.samplingRate;
+        const maxAmp = Math.max(1, state.amp) * 1.5;
+
+        drawAxes(g, `Time (s)`, `Amplitude`, 0, timeWindow.toFixed(2), -maxAmp.toFixed(1), maxAmp.toFixed(1));
+
+        // Analog signal (oversampled)
+        ctx.strokeStyle = 'var(--analog-color)'; ctx.lineWidth = 1; ctx.beginPath();
+        for (let i = 0; i <= g.w; i++) {
+             const t = (i / g.w) * timeWindow;
+             let value = 0;
+             switch(state.type) {
+                case 'sine': value = Math.sin(2 * Math.PI * state.freq1 * t); break;
+                case 'square': value = Math.sign(Math.sin(2 * Math.PI * state.freq1 * t)); break;
+                case 'triangle': value = 2 * Math.abs(2 * (t * state.freq1 - Math.floor(t * state.freq1 + 0.5))) - 1; break;
+                case 'sum_sine': value = 0.6 * Math.sin(2 * Math.PI * state.freq1 * t) + 0.4 * Math.sin(2 * Math.PI * state.freq2 * t); break;
+             }
+             const y = g.y + g.h / 2 - (value * state.amp / maxAmp) * (g.h / 2);
+             if (i === 0) ctx.moveTo(g.x + i, y); else ctx.lineTo(g.x + i, y);
+        }
+        ctx.stroke();
+
+        // Reconstructed signal (line between samples)
+        ctx.strokeStyle = 'var(--reconstructed-color)'; ctx.lineWidth = 2; ctx.beginPath();
+        for (let i = 0; i < N_SAMPLES; i++) {
+            const x = g.x + (i / N_SAMPLES) * g.w;
+            const y = g.y + g.h / 2 - (signalData[i] / maxAmp) * (g.h / 2);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        
+        // Sample points
+        ctx.fillStyle = 'var(--accent-color)';
+        for (let i = 0; i < N_SAMPLES; i++) {
+            const x = g.x + (i / N_SAMPLES) * g.w;
+            const y = g.y + g.h / 2 - (signalData[i] / maxAmp) * (g.h / 2);
+            ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+
+    function drawFreqDomain() {
+        const g = { x: 50, y: canvas.height / 2, w: canvas.width - 60, h: canvas.height / 2 };
+        const maxFreq = state.samplingRate / 2;
+        const maxMag = Math.max(0.1, ...fftData) * 1.2;
+
+        drawAxes(g, `Frequency (Hz)`, `Magnitude`, 0, maxFreq.toFixed(1), 0, maxMag.toFixed(2));
+        
+        // FFT Bars
+        ctx.fillStyle = 'var(--fft-color)';
+        for (let i = 0; i < fftData.length; i++) {
+            const freq = i * (state.samplingRate / N_SAMPLES);
+            const x = g.x + (freq / maxFreq) * g.w;
+            const magnitude = fftData[i];
+            const barHeight = (magnitude / maxMag) * g.h;
+            if (barHeight > 0) ctx.fillRect(x - 1, g.y + g.h - barHeight, 2, barHeight);
+        }
+    }
+
+    function drawAxes(g, xLabel, yLabel, xMin, xMax, yMin, yMax) {
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(g.x, g.y + g.h); ctx.lineTo(g.x + g.w, g.y + g.h); ctx.stroke(); // X axis
+        ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(g.x, g.y + g.h); ctx.stroke(); // Y axis
+        if(g.y !== 0) { // Center line for bipolar axis
+            ctx.beginPath(); ctx.moveTo(g.x, g.y + g.h / 2); ctx.lineTo(g.x + g.w, g.y + g.h / 2); ctx.stroke();
+        }
+
+        ctx.fillStyle = '#94a3b8'; ctx.font = '10px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(xLabel, g.x + g.w / 2, g.y + g.h + 25);
+        ctx.fillText(xMax, g.x + g.w, g.y + g.h + 15);
+        ctx.fillText(xMin, g.x, g.y + g.h + 15);
+        
+        ctx.textAlign = 'right';
+        ctx.save(); ctx.translate(g.x - 25, g.y + g.h/2); ctx.rotate(-Math.PI/2);
+        ctx.fillText(yLabel, 0, 0); ctx.restore();
+        ctx.fillText(yMax, g.x - 8, g.y + 10);
+        ctx.fillText(yMin, g.x - 8, g.y + g.h);
+    }
+    
+    // --- Event Handlers ---
+    Object.values(inputs).forEach(input => input.addEventListener('input', update));
+    window.addEventListener('resize', resizeCanvas);
+    
+    update();
+})();
+</script>
+</body>
+</html>
+

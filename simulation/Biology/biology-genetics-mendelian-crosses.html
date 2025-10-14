@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Mendelian Genetics Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { 
+            --bg-color: #020617; 
+            --card-color: rgba(15, 23, 42, 0.7);
+            --border-color: #1e293b; 
+            --text-light: #e2e8f0;
+            --accent-color: #14b8a6; /* Teal */
+            --dominant-color: '#db2777'; /* Pink */
+            --recessive-color: '#ffffff'; /* White */
+            --incomplete-color: '#f9a8d4'; /* Light Pink */
+        }
+        body { background-color: var(--bg-color); color: var(--text-light); font-family: 'Inter', sans-serif; }
+        .glass-card { background: var(--card-color); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-color); }
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
+            padding-right: 2.5rem; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        }
+        .punnett-grid {
+            display: grid;
+            grid-template-columns: 50px 1fr 1fr;
+            grid-template-rows: 50px 1fr 1fr;
+            gap: 4px;
+        }
+        .punnett-cell {
+            background-color: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+        }
+        .header-cell {
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto max-w-7xl">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-400">Mendelian Genetics Simulator</h1>
+            <p class="mt-2 text-slate-400 max-w-2xl mx-auto">Perform monohybrid crosses and explore different inheritance patterns with a dynamic Punnett square.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card shadow-2xl p-6 rounded-2xl lg:col-span-2">
+                <div id="punnett-square" class="punnett-grid">
+                    <!-- Punnett square will be generated here -->
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                 <h2 class="text-2xl font-bold text-center text-slate-300">Genetic Cross Setup</h2>
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-teal-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M12 18v-6"></path><path d="M9 15h6"></path></svg>
+                        Parent Genotypes & Trait
+                    </h3>
+                    <div class="text-sm space-y-4 pt-2">
+                        <div>
+                             <label for="parent1-genotype" class="font-medium text-slate-300">Parent 1 Genotype</label>
+                            <select id="parent1-genotype" class="w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                                <option value="RR">RR (Homozygous Dominant)</option>
+                                <option value="Rr">Rr (Heterozygous)</option>
+                                <option value="rr">rr (Homozygous Recessive)</option>
+                            </select>
+                        </div>
+                        <div>
+                             <label for="parent2-genotype" class="font-medium text-slate-300">Parent 2 Genotype</label>
+                            <select id="parent2-genotype" class="w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                               <option value="Rr">Rr (Heterozygous)</option>
+                               <option value="RR">RR (Homozygous Dominant)</option>
+                               <option value="rr">rr (Homozygous Recessive)</option>
+                            </select>
+                        </div>
+                         <div>
+                             <label for="inheritance-type" class="font-medium text-slate-300">Inheritance Pattern</label>
+                            <select id="inheritance-type" class="w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                                <option value="complete">Complete Dominance</option>
+                                <option value="incomplete">Incomplete Dominance</option>
+                                <option value="codominance">Codominance</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card shadow-lg p-5 rounded-2xl space-y-4">
+                     <h3 class="font-bold text-lg text-teal-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+                        Predicted Offspring Ratios
+                    </h3>
+                     <div class="text-sm pt-2 space-y-2">
+                        <div>
+                            <p class="font-semibold text-slate-300">Genotypic Ratio:</p>
+                            <p id="genotype-ratio" class="font-mono text-white"></p>
+                        </div>
+                         <div class="pt-2">
+                            <p class="font-semibold text-slate-300">Phenotypic Ratio:</p>
+                            <p id="phenotype-ratio" class="font-mono text-white"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() {
+    const p1_select = document.getElementById('parent1-genotype');
+    const p2_select = document.getElementById('parent2-genotype');
+    const inheritance_select = document.getElementById('inheritance-type');
+    const punnettContainer = document.getElementById('punnett-square');
+    const genotypeRatioEl = document.getElementById('genotype-ratio');
+    const phenotypeRatioEl = document.getElementById('phenotype-ratio');
+
+    const PHENOTYPE_COLORS = {
+        dominant: '#db2777',   // Pink
+        recessive: '#ffffff', // White
+        incomplete: '#f9a8d4', // Light Pink
+    };
+
+    function getGametes(genotype) {
+        if (genotype[0] === genotype[1]) return [genotype[0]];
+        return [genotype[0], genotype[1]];
+    }
+
+    function getPhenotype(genotype, inheritance) {
+        if (inheritance === 'complete') {
+            return genotype.includes('R') ? 'Dominant' : 'Recessive';
+        }
+        if (inheritance === 'incomplete') {
+            if (genotype === 'RR') return 'Dominant';
+            if (genotype === 'rr') return 'Recessive';
+            return 'Incomplete';
+        }
+        if (inheritance === 'codominance') {
+            if (genotype === 'RR') return 'Dominant';
+            if (genotype === 'rr') return 'Recessive';
+            return 'Codominant';
+        }
+    }
+    
+    function drawFlower(ctx, x, y, size, inheritance, genotype) {
+         let primaryColor = PHENOTYPE_COLORS.recessive;
+         let secondaryColor = null;
+
+         const phenotype = getPhenotype(genotype, inheritance);
+         if (phenotype === 'Dominant') primaryColor = PHENOTYPE_COLORS.dominant;
+         if (phenotype === 'Incomplete') primaryColor = PHENOTYPE_COLORS.incomplete;
+         if (phenotype === 'Codominant') {
+             primaryColor = PHENOTYPE_COLORS.dominant;
+             secondaryColor = PHENOTYPE_COLORS.recessive;
+         }
+
+        // Petals
+        for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2;
+            ctx.fillStyle = (secondaryColor && i % 2 === 0) ? secondaryColor : primaryColor;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.ellipse(x + Math.cos(angle) * size * 0.7, y + Math.sin(angle) * size * 0.7, size * 0.8, size * 0.3, angle, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // Center
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function update() {
+        const p1_geno = p1_select.value;
+        const p2_geno = p2_select.value;
+        const inheritance = inheritance_select.value;
+
+        const p1_gametes = getGametes(p1_geno);
+        const p2_gametes = getGametes(p2_geno);
+        
+        // Ensure we always have a 2x2 grid for simplicity
+        const p1_display_gametes = p1_gametes.length === 1 ? [p1_gametes[0], p1_gametes[0]] : p1_gametes;
+        const p2_display_gametes = p2_gametes.length === 1 ? [p2_gametes[0], p2_gametes[0]] : p2_gametes;
+        
+        const offspring = [];
+        const genotypeCounts = {};
+        const phenotypeCounts = {};
+
+        punnettContainer.innerHTML = ''; // Clear previous grid
+        
+        // Create grid cells
+        const cells = [
+            `<div class="punnett-cell header-cell"></div>`,
+            `<div class="punnett-cell header-cell">${p1_display_gametes[0]}</div>`,
+            `<div class="punnett-cell header-cell">${p1_display_gametes[1]}</div>`,
+            `<div class="punnett-cell header-cell">${p2_display_gametes[0]}</div>`,
+            `<div id="cell-0-0" class="punnett-cell"></div>`,
+            `<div id="cell-0-1" class="punnett-cell"></div>`,
+            `<div class="punnett-cell header-cell">${p2_display_gametes[1]}</div>`,
+            `<div id="cell-1-0" class="punnett-cell"></div>`,
+            `<div id="cell-1-1" class="punnett-cell"></div>`,
+        ];
+        punnettContainer.innerHTML = cells.join('');
+
+        for (let i = 0; i < 2; i++) { // Parent 2 gametes (rows)
+            for (let j = 0; j < 2; j++) { // Parent 1 gametes (cols)
+                const alleles = [p1_display_gametes[j], p2_display_gametes[i]].sort();
+                const genotype = alleles[0] + alleles[1];
+                offspring.push(genotype);
+                
+                const phenotype = getPhenotype(genotype, inheritance);
+
+                genotypeCounts[genotype] = (genotypeCounts[genotype] || 0) + 1;
+                phenotypeCounts[phenotype] = (phenotypeCounts[phenotype] || 0) + 1;
+
+                const cell = document.getElementById(`cell-${i}-${j}`);
+                const genotypeText = document.createElement('p');
+                genotypeText.textContent = genotype;
+                genotypeText.className = 'font-mono';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = 60;
+                canvas.height = 60;
+                const ctx = canvas.getContext('2d');
+                drawFlower(ctx, 30, 30, 20, inheritance, genotype);
+
+                cell.appendChild(canvas);
+                cell.appendChild(genotypeText);
+            }
+        }
+        
+        // Calculate and display ratios
+        const formatRatio = (counts) => {
+            const total = Object.values(counts).reduce((a, b) => a + b, 0);
+            return Object.entries(counts).map(([key, val]) => `${(val/total*100)}% ${key}`).join('<br>');
+        };
+        
+        genotypeRatioEl.innerHTML = formatRatio(genotypeCounts);
+        phenotypeRatioEl.innerHTML = formatRatio(phenotypeCounts);
+    }
+
+    [p1_select, p2_select, inheritance_select].forEach(el => el.addEventListener('change', update));
+    
+    update(); // Initial call
+})();
+</script>
+</body>
+</html>
+
