@@ -1,5 +1,5 @@
 # 2D Virtual Labs 🎓
-# 🌐 **Host Link:** []
+# 🌐 **Host Link:** [https://hacknova-taupe.vercel.app/]
 A comprehensive **virtual laboratory platform** for **PSIT (Pranveer Singh Institute of Technology)** students, providing **interactive simulations** and **learning materials** for various computer science and engineering subjects.
 
 ---
