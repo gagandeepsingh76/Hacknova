@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>PSIT Virtual Labs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            /* Dark Blue */
+            --secondary-color: #ffb300;
+            /* Amber */
+            --accent-color: #00bcd4;
+            /* Cyan */
+            --accent-secondary: #e91e63;
+            /* Pink */
+            --text-color: #263238;
+            /* Blue Gray */
+            --light-bg: #e0f7fa;
+            /* Light Cyan */
+            --white: #ffffff;
+            --gradient-primary: linear-gradient(135deg, #1a237e, #3f51b5);
+            --gradient-accent: linear-gradient(135deg, #00bcd4, #00e5ff);
+            --gradient-secondary: linear-gradient(135deg, #ffb300, #ffca28);
+            --gradient-tertiary: linear-gradient(135deg, #e91e63, #f06292);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+        }
+
+        .topbar {
+            background: var(--gradient-primary);
+            color: var(--white);
+            font-size: 14px;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(106, 27, 154, 0.2);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 40px;
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-section img {
+            height: 60px;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .logo-section img:hover {
+            transform: scale(1.05) rotate(5deg);
+            filter: drop-shadow(0 4px 8px rgba(0, 200, 83, 0.3));
+        }
+
+        .logo-text {
+            font-size: 14px;
+            color: var(--primary-color);
+        }
+
+
+        .header-image {
+            height: 80px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .header-image:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-bar {
+            position: relative;
+        }
+
+        input {
+            padding: 12px 50px;
+            width: 300px;
+            border-radius: 30px;
+            border: 2px solid #e0e0e0;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: var(--light-bg);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(0, 200, 83, 0.2);
+        }
+
+        .navbar {
+            background: var(--gradient-primary);
+            display: flex;
+            justify-content: space-between;
+            /* Changed: push items to both ends */
+            align-items: center;
+            /* Added: align items vertically */
+            padding: 0 40px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            /* Added: make nav links a flex container */
+        }
+
+        .navbar a {
+            color: var(--white);
+            padding: 18px 25px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .navbar a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: var(--accent-color);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .navbar a:hover::after,
+        .navbar a.active::after {
+            width: 80%;
+        }
+
+        .navbar .search-bar input {
+            width: 250px;
+            /* Adjusted width for navbar */
+            padding: 10px 20px;
+        }
+
+        .slider-container {
+            position: relative;
+            width: 90%;
+            max-width: 1400px;
+            height: 500px;
+            margin: 40px auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-container img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 15px;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 2;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .slider-btn:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .slider-btn.left {
+            left: 20px;
+        }
+
+        .slider-btn.right {
+            right: 20px;
+        }
+
+        .content {
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--white);
+            margin: 40px auto;
+            max-width: 1200px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .obj {
+            border: none;
+            width: 300px;
+            margin: 0 auto 30px;
+            background: var(--gradient-primary);
+            color: var(--white);
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 28px;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(106, 27, 154, 0.3);
+            transform: translateY(-20px);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .objectives {
+            background-color: var(--light-bg);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            font-size: 16px;
+            line-height: 1.8;
+            text-align: center;
+            border-radius: 15px;
+        }
+
+        .objectives p {
+            margin: 20px 0;
+            padding: 20px;
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--accent-color);
+            transition: all 0.3s ease;
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .objectives p:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 200, 83, 0.2);
+            border-left-color: var(--secondary-color);
+        }
+
+        .broad-areas {
+            background: var(--gradient-primary);
+            padding: 50px 20px;
+            text-align: center;
+            color: var(--white);
+            margin-top: 40px;
+        }
+
+        .broad-areas h2 {
+            color: var(--white);
+            margin-bottom: 30px;
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .area-columns {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            perspective: 1000px;
+        }
+
+        .lab-button {
+            display: inline-block;
+            padding: 20px 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            font-size: 1.2em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            min-width: 300px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lab-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    rgba(255, 255, 255, 0.05) 50%,
+                    rgba(255, 255, 255, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .lab-button:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .lab-button:hover::before {
+            opacity: 1;
+        }
+
+        .lab-button::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent-color);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+
+        .lab-button:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        @media (max-width: 768px) {
+            .lab-button {
+                min-width: 250px;
+                padding: 15px 30px;
+                font-size: 1.1em;
+            }
+        }
+
+        /* Add shine effect */
+        @keyframes shine {
+            0% {
+                background-position: 0% center;
+            }
+
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        .area-columns li {
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    rgba(255, 255, 255, 0.2) 50%,
+                    rgba(255, 255, 255, 0.1) 100%);
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+        }
+
+        /* Add floating animation */
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .area-columns li {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .area-columns li:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .area-columns li:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .area-columns li:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .area-columns li:nth-child(4) {
+            animation-delay: 0.6s;
+        }
+
+        .area-columns li:nth-child(5) {
+            animation-delay: 0.8s;
+        }
+
+        /* Add hover glow effect */
+        .area-columns li:hover {
+            box-shadow: 0 0 20px rgba(0, 200, 83, 0.3),
+                0 0 40px rgba(0, 200, 83, 0.2),
+                0 0 60px rgba(0, 200, 83, 0.1);
+        }
+
+        /* Add responsive adjustments */
+        @media (max-width: 768px) {
+            .area-columns ul {
+                min-width: 90%;
+                margin: 0 15px;
+            }
+
+            .area-columns li {
+                font-size: 1em;
+                padding: 12px 15px;
+            }
+
+            /* Responsive navbar for mobile */
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+            .nav-links {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+
+            .navbar .search-bar {
+                width: 100%;
+                margin: 10px 0;
+            }
+
+            .navbar .search-bar input {
+                width: 100%;
+            }
+
+            /* Header responsiveness */
+            .header {
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            .header>div {
+                margin-bottom: 15px;
+            }
+
+            .header-image {
+                height: 60px;
+                margin-top: 10px;
+            }
+        }
+
+        /* Add some new styles for better visual hierarchy */
+        .content h2 {
+            color: var(--primary-color);
+            font-size: 2.5em;
+            margin-bottom: 1em;
+            text-shadow: none;
+            background: var(--gradient-secondary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .objectives p {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .objectives p::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .objectives p:hover::before {
+            opacity: 0.1;
+        }
+
+        /* Add subtle animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content,
+        .broad-areas {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        /* Enhanced animations */
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .obj {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Add glassmorphism effect */
+        .objectives p {
+            backdrop-filter: blur(5px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .login-btn-nav {
+            /* background: var(--gradient-accent); */
+            color: var(--white);
+            /* padding: 12px 30px; */
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Add gradient text effect */
+        .content h2 {
+            background: var(--gradient-secondary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+        }
+
+        /* Enhanced hover effects */
+        .logo-section img:hover {
+            transform: scale(1.05) rotate(5deg);
+            filter: drop-shadow(0 4px 8px rgba(0, 200, 83, 0.3));
+        }
+
+        /* Add pulse animation for interactive elements */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .buttons button:hover {
+            animation: pulse 1s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            .logo-section {
+                margin-bottom: 15px;
+            }
+
+            .search-bar input {
+                width: 100%;
+            }
+
+            .navbar {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .navbar a {
+                padding: 12px 15px;
+            }
+
+            .slider-container {
+                height: 300px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .obj {
+                width: 80%;
+                font-size: 24px;
+            }
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 10px #6a1b9a, 0 0 20px #ff6f00, 0 0 30px #00c853;
+            }
+
+            100% {
+                text-shadow: 0 0 20px #ff6f00, 0 0 40px #00c853, 0 0 60px #6a1b9a;
+            }
+        }
+
+        /* Chatbot Button Styles */
+        .chatbot-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            padding: 10px;
+        }
+
+        .chatbot-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .chatbot-button i {
+            color: var(--white);
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .chatbot-button span {
+            color: var(--white);
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .chatbot-button::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--accent-color);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: -1;
+        }
+
+        .chatbot-button:hover::before {
+            opacity: 0.2;
+            transform: scale(1.5);
+        }
+    </style>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    
+    
+
+
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo-text">
+                <span style="
+                    font-size: 3em;
+                    font-weight: 800;
+                    letter-spacing: 2px;
+                    color: #6a1b9a;
+                    background: linear-gradient(90deg, #6a1b9a, #ff6f00, #00c853);
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    color: transparent;
+                    text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+                    display: inline-block;
+                    margin: 10px 0;
+                    padding: 5px 15px;
+                    border-radius: 12px;
+                    animation: fadeIn 2s ease-in-out;
+                ">
+                    2D VIRTUAL LABS
+                </span>
+
+                <style>
+                    @keyframes fadeIn {
+                        0% {
+                            opacity: 0;
+                            transform: translateY(-10px);
+                        }
+
+                        100% {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                </style>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="navbar">
+        <div class="nav-links">
+            <a href="index.html" class="active">HOME</a>
+            <a href="about.html">ABOUT US</a>
+            <a href="contact.html">CONTACT US</a>
+        </div>
+        <a href="vr.html" style="margin-left:auto; padding:10px 16px; border-radius:24px; background: linear-gradient(135deg, #6a1b9a, #00c853); color:#fff; text-decoration:none; font-weight:600; box-shadow:0 4px 10px rgba(0,0,0,0.15);">Explore Virtual Reality</a>
+    </div>
+
+    <div class="slider-container">
+        <button class="slider-btn left" onclick="prevImage()">❮</button>
+        <img id="slider-image-1" src="https://pnccs.edu.in/wp-content/uploads/2024/11/female-teacher-girl-doing-science-experiments-with-test-tubes-microscope-1-scaled.jpg" alt="Science Experiment 1">
+        <img id="slider-image-2" src="https://www.21kschool.com/ua/wp-content/uploads/sites/6/2022/09/10-Easy-Science-Experiments-For-Young-Scientists.png" alt="Science Experiment 2">
+        <img id="slider-image-3" src="https://www.teachingchannel.com/wp-content/uploads/2023/05/affordable-science-experiments.jpg" alt="Science Experiment 3">
+        <img id="slider-image-4" src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1000&h=500&fit=crop&auto=format" alt="Science Experiment 4">
+        <img id="slider-image-5" src="https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=1000&h=500&fit=crop&auto=format" alt="Science Experiment 5">
+
+        <button class="slider-btn right" onclick="nextImage()">❯</button>
+    </div>
+
+    <script>
+        const images = [
+            "https://pnccs.edu.in/wp-content/uploads/2024/11/female-teacher-girl-doing-science-experiments-with-test-tubes-microscope-1-scaled.jpg",
+            "https://www.21kschool.com/ua/wp-content/uploads/sites/6/2022/09/10-Easy-Science-Experiments-For-Young-Scientists.png",
+            "https://www.teachingchannel.com/wp-content/uploads/2023/05/affordable-science-experiments.jpg",
+            "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1000&h=500&fit=crop&auto=format",
+            "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=1000&h=500&fit=crop&auto=format"
+        ];
+
+        const imgElements = [
+            document.getElementById("slider-image-1"),
+            document.getElementById("slider-image-2"),
+            document.getElementById("slider-image-3"),
+            document.getElementById("slider-image-4"),
+            document.getElementById("slider-image-5")
+        ];
+
+        let current = 0;
+
+        function nextImage() {
+            current = (current + 1) % images.length;
+            updateSliderPosition();
+        }
+
+        function prevImage() {
+            current = (current - 1 + images.length) % images.length;
+            updateSliderPosition();
+        }
+
+        function updateSliderPosition() {
+            imgElements.forEach((img, index) => {
+                img.style.transform = `translateX(${(index - current) * 100}%)`;
+            });
+        }
+
+        // Start with proper image alignment
+        updateSliderPosition();
+
+        // Auto-slide every 2.5 seconds
+        setInterval(nextImage, 2500);
+    </script>
+
+
+    <hr>
+
+    <div class="content">
+        <h2 class="obj">Objectives</h2>
+        <div class="objectives">
+            <p><b>Enhance Practical Learning:</b>To provide students with an interactive platform where they can perform
+                virtual experiments, bridging the gap between
+                theoretical knowledge and practical application.
+            </p>
+            <p><b>Improve Accessibility and Flexibility:</b>To allow students to access lab experiments anytime,
+                anywhere, without being limited by physical infrastructure or lab
+                timings.
+            </p>
+            <p><b>Promote Conceptual Understanding:</b>To help students understand complex engineering and technical
+                concepts through real-time simulations, visualizations,
+                and hands-on virtual practice.</p>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="broad-areas">
+        <h2>Broad Areas of 2D Virtual Labs</h2>
+        <div class="area-columns">
+            <a href="h1.html" class="lab-button">Basic Electrical Engineering Lab (BEE)</a>
+            <a href="h2.html" class="lab-button">Data Analytics Lab (DA)</a>
+            <a href="h3.html" class="lab-button">Data Structure And Algorithm Lab (DSA)</a>
+            <a href="h4.html" class="lab-button">Data Analysis And Algorithm Lab (DAA)</a>
+            <a href="h5.html" class="lab-button">Artificial Intelligence and Machine Learning Lab (AIML)</a>
+            <a href="h6.html" class="lab-button">Blockchain Lab (BL)</a>
+            <a href="h7.html" class="lab-button">Cryptography Lab (CR)</a>
+
+        </div>
+    </div>
+    <br><br><br><br>
+    <footer style="text-align:center; padding:20px; background-color:#f1f1f1;">
+        <p>&copy; 2025 2D Virtual Labs . All rights reserved.</p>
+    </footer>
+
+</body>
+
+</html>
