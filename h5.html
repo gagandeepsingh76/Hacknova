@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>AI & ML Virtual Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4527a0;
+            --secondary-color: #00bcd4;
+            --accent-color: #7c4dff;
+            --accent-secondary: #00e5ff;
+            --text-color: #37474f;
+            --light-bg: #f5f5f5;
+            --white: #ffffff;
+            --gradient-primary: linear-gradient(135deg, #4527a0, #00bcd4);
+            --gradient-accent: linear-gradient(135deg, #7c4dff, #00e5ff);
+            --gradient-text: linear-gradient(90deg, #4527a0, #7c4dff, #00bcd4);
+            --button-gradient: linear-gradient(135deg, #7c4dff, #00e5ff);
+            --button-hover: linear-gradient(135deg, #00e5ff, #7c4dff);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+        }
+
+        .header {
+            background-color: var(--white);
+            padding: 10px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            height: 75px;
+        }
+
+        .header h1 {
+            color: var(--text-color);
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .experiments-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .experiment-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .experiment-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .experiment-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .experiment-card p {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .experiment-card .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--button-gradient);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(124, 77, 255, 0.2);
+        }
+
+        .experiment-card .btn:hover {
+            transform: scale(1.05);
+            background: var(--button-hover);
+            box-shadow: 0 5px 15px rgba(124, 77, 255, 0.4);
+        }
+
+        .back-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--gradient-primary);
+            color: var(--white);
+            padding: 15px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            box-shadow: 0 5px 15px rgba(69, 39, 160, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: linear-gradient(135deg, #00bcd4, #4527a0);
+            box-shadow: 0 8px 20px rgba(69, 39, 160, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .experiments-container {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+        }
+
+        .navbar {
+            background: var(--gradient-primary);
+            display: flex;
+            justify-content: center;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .navbar a {
+            color: var(--white);
+            padding: 10px 20px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .navbar a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: var(--accent-color);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .navbar a:hover::after,
+        .navbar a.active::after {
+            width: 80%;
+        }
+
+        .navbar .search-container {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: var(--white);
+            border-radius: 25px;
+            border: 2px solid var(--accent-color);
+        }
+
+        .navbar .search-container input[type="text"] {
+            border: none;
+            outline: none;
+            padding: 5px;
+            border-radius: 25px;
+            font-size: 1em;
+            color: var(--text-color);
+        }
+
+        .navbar .search-container input[type="text"]::placeholder {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .experiments-container {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+
+            .navbar {
+                flex-direction: column;
+            }
+
+            .navbar a,
+            .navbar .search-container {
+                margin: 5px 0;
+            }
+
+            .navbar .search-container {
+                margin-left: 0;
+                width: 80%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <span style="
+            font-size: 3em;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: var(--gradient-text);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+            display: inline-block;
+            margin: 10px 0;
+            padding: 5px 15px;
+            border-radius: 12px;
+            animation: fadeIn 2s ease-in-out;
+        ">
+            AI & ML VIRTUAL LAB
+        </span>
+
+    </div>
+
+    <div class="navbar">
+        <a href="h1.html">BASIC ELECTRICAL ENGINEERING</a>
+        <a href="h2.html">DATA ANALYTICS</a>
+        <a href="h3.html">DATA STRUCTURE AND ALGORITHM</a>
+        <a href="h4.html">DATA ANALYSIS AND ALGORITHM</a>
+        <a href="h5.html" class="active">AI & ML</a>
+        <a href="h6.html">BLOCKCHAIN</a>
+        <a href="h7.html">CRYPTOGRAPHY</a>
+    </div>
+
+    <div class="experiments-container">
+        <div class="experiment-card">
+            <h3>1. Introduction to NumPy and pandas</h3>
+            <p><strong>Aim:</strong> Learn the basics of NumPy arrays and pandas DataFrames for data manipulation.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp1.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>2. Exploratory Data Analysis (EDA)</h3>
+            <p><strong>Aim:</strong> Analyze and visualize datasets to understand data distribution and patterns.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp2.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>3. Data Preprocessing Techniques</h3>
+            <p><strong>Aim:</strong> Apply techniques like normalization, encoding, and handling missing values.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp3.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>4. Linear Regression</h3>
+            <p><strong>Aim:</strong> Implement and understand simple and multiple linear regression models.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp4.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>5. Logistic Regression</h3>
+            <p><strong>Aim:</strong> Learn binary classification using logistic regression.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp5.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>6. Decision Tree vs Random Forest</h3>
+            <p><strong>Aim:</strong> Compare decision tree and random forest models.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp6.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>7. Support Vector Machine (SVM)</h3>
+            <p><strong>Aim:</strong> Classify data using SVM and understand hyperplanes.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp7.html'">Start Simulation</button>
+        </div>
+
+
+
+        <div class="experiment-card">
+            <h3>8. K-Means Clustering</h3>
+            <p><strong>Aim:</strong> Apply unsupervised learning to cluster data using k-means.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp8.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>9. PCA</h3>
+            <p><strong>Aim:</strong> Reduce dimensionality of datasets using Principal Component Analysis.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp9.html'">Start Simulation</button>
+        </div>
+
+
+
+        <div class="experiment-card">
+            <h3>10. CNN for Image Classification</h3>
+            <p><strong>Aim:</strong> Implement convolutional neural networks for image classification tasks.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp10.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>11. Evaluation Metrics</h3>
+            <p><strong>Aim:</strong> Understand model evaluation using accuracy, precision, recall, and F1-score.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp11.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>12. Hyperparameter Tuning (GridSearch)</h3>
+            <p><strong>Aim:</strong> Tune model parameters using grid search techniques.</p>
+            <button class="btn" onclick="window.location.href='aiml/exp12.html'">Start Simulation</button>
+        </div>
+
+
+    </div>
+    <br><br><br><br>
+    <footer style="text-align:center; padding:20px; background-color:#f1f1f1;">
+        <p>&copy; 2025 2D Virtual Labs . All rights reserved.</p>
+    </footer>
+    <a href="index.html" class="back-btn">Back to Home</a>
+</body>
+
+</html>

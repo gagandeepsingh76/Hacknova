@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cryptography Virtual Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d47a1;
+            --secondary-color: #ffd700;
+            --accent-color: #1565c0;
+            --accent-secondary: #ffc107;
+            --text-color: #37474f;
+            --light-bg: #f5f5f5;
+            --white: #ffffff;
+            --gradient-primary: linear-gradient(135deg, #0d47a1, #ffd700);
+            --gradient-accent: linear-gradient(135deg, #1565c0, #ffc107);
+            --gradient-text: linear-gradient(90deg, #0d47a1, #1565c0, #ffd700);
+            --button-gradient: linear-gradient(135deg, #1565c0, #ffc107);
+            --button-hover: linear-gradient(135deg, #ffc107, #1565c0);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+        }
+
+        .header {
+            background-color: var(--white);
+            padding: 10px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            height: 75px;
+        }
+
+        .header h1 {
+            color: var(--text-color);
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .experiments-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .experiment-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .experiment-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .experiment-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .experiment-card p {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .experiment-card .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--button-gradient);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(21, 101, 192, 0.2);
+        }
+
+        .experiment-card .btn:hover {
+            transform: scale(1.05);
+            background: var(--button-hover);
+            box-shadow: 0 5px 15px rgba(21, 101, 192, 0.4);
+        }
+
+        .back-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--gradient-primary);
+            color: var(--white);
+            padding: 15px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            box-shadow: 0 5px 15px rgba(13, 71, 161, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: linear-gradient(135deg, #ffd700, #0d47a1);
+            box-shadow: 0 8px 20px rgba(13, 71, 161, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .experiments-container {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+        }
+
+        .navbar {
+            background: var(--gradient-primary);
+            display: flex;
+            justify-content: center;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .navbar a {
+            color: var(--white);
+            padding: 10px 20px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .navbar a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: var(--accent-color);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .navbar a:hover::after,
+        .navbar a.active::after {
+            width: 80%;
+        }
+
+        .navbar .search-container {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: var(--white);
+            border-radius: 25px;
+            border: 2px solid var(--accent-color);
+        }
+
+        .navbar .search-container input[type="text"] {
+            border: none;
+            outline: none;
+            padding: 5px;
+            border-radius: 25px;
+            font-size: 1em;
+            color: var(--text-color);
+        }
+
+        .navbar .search-container input[type="text"]::placeholder {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .experiments-container {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+
+            .navbar {
+                flex-direction: column;
+            }
+
+            .navbar a,
+            .navbar .search-container {
+                margin: 5px 0;
+            }
+
+            .navbar .search-container {
+                margin-left: 0;
+                width: 80%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <span style="
+                            font-size: 3em;
+                            font-weight: 800;
+                            letter-spacing: 2px;
+                            background: var(--gradient-text);
+                            -webkit-background-clip: text;
+                            background-clip: text;
+                            color: transparent;
+                            text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+                            display: inline-block;
+                            margin: 10px 0;
+                            padding: 5px 15px;
+                            border-radius: 12px;
+                            animation: fadeIn 2s ease-in-out;
+                        ">
+            CRYPTOGRAPHY VIRTUAL LAB
+        </span>
+
+    </div>
+
+    <div class="navbar">
+        <a href="h1.html">BASIC ELECTRICAL ENGINEERING</a>
+        <a href="h2.html">DATA ANALYTICS</a>
+        <a href="h3.html">DATA STRUCTURE AND ALGORITHM</a>
+        <a href="h4.html">DATA ANALYSIS AND ALGORITHM</a>
+        <a href="h5.html">AI & ML</a>
+        <a href="h6.html">BLOCKCHAIN</a>
+        <a href="h7.html" class="active">CRYPTOGRAPHY</a>
+    </div>
+
+    <div class="experiments-container">
+        <div class="experiment-card">
+            <h3>1. Caesar Cipher Encryption</h3>
+            <p><strong>Aim:</strong> To implement and demonstrate the process of encrypting plaintext messages using the
+                Caesar Cipher technique, where each letter is shifted by a fixed number of positions in the alphabet.
+            </p>
+            <button class="btn" onclick="window.location.href='cr/exp1.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>2. Caesar Cipher Decryption</h3>
+            <p><strong>Aim:</strong> To implement and demonstrate the process of decrypting Caesar Cipher encrypted
+                messages by applying the reverse shift operation to recover the original plaintext.</p>
+            <button class="btn" onclick="window.location.href='cr/exp2.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>3. Vigenère Cipher Encryption</h3>
+            <p><strong>Aim:</strong> To implement and demonstrate the process of encrypting messages using the Vigenère
+                Cipher, where each letter is encrypted using a different shift based on a repeating keyword.</p>
+            <button class="btn" onclick="window.location.href='cr/exp3.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>4. Vigenère Cipher Decryption</h3>
+            <p><strong>Aim:</strong> To implement and demonstrate the process of decrypting Vigenère Cipher encrypted
+                messages by applying the reverse shifts using the same keyword to recover the original text.</p>
+            <button class="btn" onclick="window.location.href='cr/exp4.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>5. Playfair Cipher Grid Setup</h3>
+            <p><strong>Aim:</strong> To implement and demonstrate the creation of a 5x5 Playfair Cipher grid using a
+                keyword, including handling of the alphabet, special characters, and grid generation rules.</p>
+            <button class="btn" onclick="window.location.href='cr/exp5.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>6. Monoalphabetic Cipher</h3>
+            <p><strong>Aim:</strong> To implement and demonstrate a monoalphabetic substitution cipher where each letter
+                in the plaintext is replaced with a unique letter from a scrambled alphabet to create the ciphertext.
+            </p>
+            <button class="btn" onclick="window.location.href='cr/exp6.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>7. XOR Cipher</h3>
+            <p><strong>Aim:</strong> To implement and demonstrate the XOR cipher encryption process, where each
+                character of the plaintext is combined with a key using the XOR operation to produce the ciphertext.</p>
+            <button class="btn" onclick="window.location.href='cr/exp7.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>8. Hash Function Simulator (SHA-256)</h3>
+            <p><strong>Aim:</strong> To implement and demonstrate the SHA-256 hashing algorithm, showing how it
+                processes input data through multiple rounds of compression to generate a 256-bit hash value.</p>
+            <button class="btn" onclick="window.location.href='cr/exp8.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>9. Diffie-Hellman Key Exchange (Visualization)</h3>
+            <p><strong>Aim:</strong> To create an interactive visualization of the Diffie-Hellman key exchange process,
+                demonstrating how two parties can securely establish a shared secret key through public channel
+                communication.</p>
+            <button class="btn" onclick="window.location.href='cr/exp9.html'">Start Simulation</button>
+        </div>
+
+        <div class="experiment-card">
+            <h3>10. Frequency Analysis Attack</h3>
+            <p><strong>Aim:</strong> To implement and demonstrate frequency analysis techniques for breaking
+                substitution ciphers by analyzing and comparing the frequency distribution of letters in encrypted text
+                with standard English letter frequencies.</p>
+            <button class="btn" onclick="window.location.href='cr/exp10.html'">Start Simulation</button>
+        </div>
+    </div>
+    <br><br><br><br>
+    <footer style="text-align:center; padding:20px; background-color:#f1f1f1;">
+        <p>&copy; 2025 2D Virtual Labs . All rights reserved.</p>
+    </footer>
+    <a href="index.html" class="back-btn">Back to Home</a>
+</body>
+
+</html>
